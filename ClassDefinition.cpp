@@ -1,4 +1,6 @@
+// class definition used in code
 #include "MacroAndMostUsedLibrary.h"
+#include "OverallVariablesDeclarification.h"
 using namespace std;
 #include "ClassClarification.h"
 
@@ -155,6 +157,17 @@ Point operator / (Point& a, double b)
 	return c;
 }
 
+double BasicFunction::Lx = 1;
+double BasicFunction::Ly = 1;
+double BasicFunction::Lz = 1;
+void BasicFunction::assign_TypicalLength(double* TypicalLength)
+{
+	Lx = TypicalLength[0];
+	if (Dim > 1)
+		Ly = TypicalLength[1];
+	if (Dim > 2)
+		Lz = TypicalLength[2];
+}
 BasicFunction::BasicFunction() {}
 BasicFunction::BasicFunction(Point& R, Point& D)
 {

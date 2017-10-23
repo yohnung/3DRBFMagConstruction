@@ -44,6 +44,10 @@ public:
 	double get_yzDeriv(Point& x);
 	double get_zzDeriv(Point& x);
 	double get_ScalarDeriv(Point& x);
+	static double Lx;
+	static double Ly;
+	static double Lz;
+	static void assign_TypicalLength(double*);
 private:
 	Point Node;
 	Point DistParameter;

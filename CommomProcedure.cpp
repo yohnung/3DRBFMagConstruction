@@ -1,13 +1,170 @@
+// procedure used definition source file
 #include <iomanip>
 #include <mkl.h>
 #include "MacroAndMostUsedLibrary.h"
 using namespace std;
+#include "OverallVariablesDeclarification.h"
 #include "ClassClarification.h"
+#include "ReadingData.h"
 #include "ProcedureClarification.h"
 
-void constructNodesWeb(Point* Node, Point* DistParam, double* max_posit, double* min_posit)
+void CrdTrf2FlyDirec(int num, Point* Position, double observedValue[][Dim], double* Alpha, 
+	double* max_posit, double* min_posit)
 {
-/******	instruct the web of nodes	**************************************************************************/
+/******	Coordinates Transform to Flying Direction make it x-direction,			******/
+/******	given num, position to find flying_direction, then specify Alpha and 	******/
+/******	transform position, observed value. finally find max and min position	******/
+	double flying_direction[Dim] = { 0 };
+	int Num_obserPosit = M;								// Number of observed position
+	int Num_Crafts = GroupNumber;						// Number of Crafts
+	double(* CraftLeap)[Dim] = new double[Num_Crafts*(Num_obserPosit-1)][Dim];
+	double value[Dim];									// use in coordinates transform by representing old coordinates
+	int i, g;
+  /******	calculate flying direction by average distance vector	******/
+	for (g = 0; g < Num_Crafts; g++)
+	{
+		for (i = 0; i < Num_obserPosit - 1; i++)
+		{
+			
+			CraftLeap[g*(Num_obserPosit-1) + i][0] = Position[g*(Num_obserPosit) + i + 1].getx() 
+				- Position[g*(Num_obserPosit) + i].getx();
+			flying_direction[0] += CraftLeap[g*(Num_obserPosit-1) + i][0];
+			if (Dim > 1)
+			{
+				CraftLeap[g*(Num_obserPosit-1) + i][1] = Position[g*(Num_obserPosit) + i + 1].gety() 
+					- Position[g*(Num_obserPosit) + i].gety();
+				flying_direction[1] += CraftLeap[g*(Num_obserPosit-1) + i][1];
+			}
+			if (Dim > 2)
+			{
+				CraftLeap[g*(Num_obserPosit-1) + i][2] = Position[g*(Num_obserPosit) + i + 1].getz() 
+					- Position[g*(Num_obserPosit) + i].getz();
+				flying_direction[2] += CraftLeap[g*(Num_obserPosit-1) + i][2];
+			}
+		}
+	}	
+  /******	find transform degree	******/
+	specifyDegree(flying_direction, Alpha);		
+  /******	according given Alpha[0] = alpha, Alpha[1] = gamma to transform coordinates	******/
+	if (Dim == 1)
+		cout << "This is a one-dimensional problem, need not coordinates transform!" << endl;
+	if (Dim > 1)
+	{
+		for (i = 0; i< num; i++)
+		{
+			value[0] = Position[i].getx();	value[1] = Position[i].gety();	// old coordinates
+    /****** rotate oldx-oldy to new x'-y coordinates by z-axis ******/
+			ZAxisCrdTrans(-Alpha[0], value);								// need couterclock
+			Position[i].assignx(value[0]); Position[i].assigny(value[1]);	// assign new coordinates
+			ZAxisCrdTrans(-Alpha[0], observedValue[i]);						// need couterclock
+    /****** rotate x'-oldz to new x-z coordinates by y-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = Position[i].getz();
+				YAxisCrdTrans(Alpha[1], value);
+				Position[i].assignx(value[0]); Position[i].assignz(value[2]);
+				YAxisCrdTrans(Alpha[1], observedValue[i]);
+			}
+		}
+	}
+  /******	find maximum and minimum position value	******/
+	max_posit[0] = Position[0].getx();
+	min_posit[0] = Position[0].getx();
+	if (Dim > 1)
+	{
+		max_posit[1] = Position[1].gety();
+		min_posit[1] = Position[1].gety();
+	}
+	if (Dim > 2)
+	{
+		max_posit[2] = Position[2].getz();
+		min_posit[2] = Position[2].getz();
+	}
+	for (i = 1; i < num; i++)
+	{
+		if (Position[i].getx() < min_posit[0])
+			min_posit[0] = Position[i].getx();
+		if (Position[i].getx() > max_posit[0])
+			max_posit[0] = Position[i].getx();
+		if (Dim > 1)
+		{
+			if (Position[i].gety() < min_posit[1])
+				min_posit[1] = Position[i].gety();
+			if (Position[i].gety() > max_posit[1])
+				max_posit[1] = Position[i].gety();
+		}
+		if (Dim > 2)
+		{
+			if (Position[i].getz() < min_posit[2])
+				min_posit[2] = Position[i].getz();
+			if (Position[i].getz() > max_posit[2])
+				max_posit[2] = Position[i].getz();
+		}
+	}
+  /******	recycle dynamic memory	******/
+	delete[] CraftLeap;
+}
+void specifyDegree(double* direction, double* Alpha)
+{
+/******	according to direction, find alpha and gamma to write in Alpha[0] and Alpha[1]	******/
+	if (Dim == 1)								// don't need transform
+		Alpha[0] = 0;
+	if (Dim == 2)
+	{
+		Alpha[0] = acos(direction[0] / sqrt(direction[0] * direction[0]
+			+ direction[1] * direction[1]));
+		Alpha[1] = 0;							// useless
+	}
+	if (Dim == 3)
+	{
+		Alpha[2] = sqrt(direction[0] * direction[0]		// use as a temp value
+			+ direction[1] * direction[1]);				// sqrt(x*x + y*y)
+		Alpha[0] = acos(direction[0] / Alpha[2]);
+		Alpha[1] = acos(Alpha[2] / sqrt(Alpha[2] * Alpha[2] + direction[2] * direction[2]));
+		Alpha[2] = 0;							// useless
+	}
+}
+void ZAxisCrdTrans(double Alpha, double value[Dim])
+{
+/******	according given Alpha transform coordinates around z axis	******/
+	double x, y;			// new coordinates
+	double oldx, oldy;		// old coordinates
+	double valuex, valuey;	// new value
+/*if (Dim == 1)*/
+	//cout << "This is a one-dimensional problem, need not coordinates transform!" << endl;
+	oldx = value[0]; oldy = value[1];
+/****** rotate oldx-oldy to new x-y coordinates ******/
+	x = oldx * cos(Alpha) - oldy * sin(Alpha);
+	y = oldx * sin(Alpha) + oldy * cos(Alpha);
+	value[0] = x; value[1] = y;
+}
+void YAxisCrdTrans(double Alpha, double value[Dim])
+{
+/******	according given Alpha transform coordinates around y axis	******/
+	double x, z;			// new coordinates
+	double oldx, oldz;		// old coordinates
+	double valuex, valuez;	// new value
+	oldx = value[0]; oldz = value[2];
+/****** rotate oldx-oldz to new x-z coordinates ******/
+	x =  oldx * cos(Alpha) + oldz * sin(Alpha);
+	z = -oldx * sin(Alpha) + oldz * cos(Alpha);
+	value[0] = x; value[2] = z;
+}
+void XAxisCrdTrans(double Alpha, double value[Dim])
+{
+/******	according given Alpha transform coordinates around x axis	******/
+	double y, z;			// new coordinates
+	double oldy, oldz;		// old coordinates
+	double valuey, valuez;	// new value
+/****** rotate oldy-oldz to new y-z coordinates by x-axis	******/
+	oldy = value[1]; oldz = value[2];
+	y = oldy * cos(Alpha) - oldz * sin(Alpha);
+	z = oldy * sin(Alpha) + oldz * cos(Alpha);
+	value[1] = y; value[2] = z;
+}
+void constructNodesWeb(double* max_posit, double* min_posit, Point* Node, Point* DistParam, double* TypicalLength)
+{
+/******	construct the web of nodes and specify the typical length of RBF according to distance between adjacent nodes	******/
 	double stretchParam = 3.;							// DistanceParameter = stretchParameter * meanDelta;
 	Point max_Position, min_Position;
 	max_Position.specify(max_posit); min_Position.specify(min_posit);
@@ -21,7 +178,10 @@ void constructNodesWeb(Point* Node, Point* DistParam, double* max_posit, double*
 		meandist[0] = 0;
 	}
 	else
+	{
 		meandist[0] = 1.4 * (max_posit[0] - min_posit[0]) / (Nx - 1);
+		TypicalLength[0] = meandist[0];								// Typical length of Radial Basic Function
+	}
 	meanDelta[0].assignx(meandist[0]);
 	DistParam[0].assignx(meandist[0]);
 	if (Dim > 1)
@@ -33,7 +193,10 @@ void constructNodesWeb(Point* Node, Point* DistParam, double* max_posit, double*
 			meandist[1] = 0;
 		}
 		else
+		{
 			meandist[1] = 1.4 * (max_posit[1] - min_posit[1]) / (Ny - 1);
+			TypicalLength[1] = meandist[1];							// Typical length of Radial Basic Function
+		}
 		meanDelta[1].assigny(meandist[1]);
 		DistParam[0].assigny(meandist[1]);
 	}
@@ -46,7 +209,10 @@ void constructNodesWeb(Point* Node, Point* DistParam, double* max_posit, double*
 			meandist[2] = 0;
 		}
 		else
+		{
 			meandist[2] = 1.4 * (max_posit[2] - min_posit[2]) / (Nz - 1);
+			TypicalLength[2] = meandist[2];							// Typical length of Radial Basic Function
+		}
 		meanDelta[2].assignz(meandist[2]);
 		DistParam[0].assignz(meandist[2]);
 	}
@@ -111,6 +277,164 @@ void constructNodesWeb(Point* Node, Point* DistParam, double* max_posit, double*
 	ofstream dimout("DimensionInformation.dat");	// write out dimension infromation
 	dimout << Dim << endl << Nx << endl << Ny << endl << Nz << endl;
 	dimout.close();
+}
+void CrdTrfFromFlyDirec(int num, double* Alpha, Point* Position, double observedValue[][Dim], 
+	Point* Node, Point* DistParam, double* TypicalLenght)
+{
+/****** coordinates transform form x-flying direction to original one according to degree Alpha ******/
+	double value[Dim];
+	int i;
+	if (Dim == 1)
+		cout << "This is a one-dimensional problem, need not coordinates transform!" << endl;
+	if (Dim > 1)
+	{
+		for (i = 0; i< num; i++)		// transform position and observed value
+		{
+			value[0] = Position[i].getx(); value[1] = Position[i].gety();		// old coordinates
+  /****** rotate new y-z back to y'-oldz coordinates by x-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = Position[i].getz();
+				YAxisCrdTrans(-Alpha[1], value);								// rotate back
+				Position[i].assignx(value[0]); Position[i].assignz(value[2]);
+				YAxisCrdTrans(-Alpha[1], observedValue[i]);
+			}
+  /****** rotate new x-y' to oldx-oldy coordinates by z-axis ******/
+			ZAxisCrdTrans(Alpha[0], value);						// rotate back, minus compared with 'CrdTrf2FlyDirec'
+			Position[i].assignx(value[0]); Position[i].assigny(value[1]);	// assign new coordinates
+			ZAxisCrdTrans(Alpha[0], observedValue[i]);
+		}
+		for (i = 0; i< N; i++)			// transform Node
+		{
+
+			value[0] = Node[i].getx(); value[1] = Node[i].gety();				// old coordinates
+  /****** rotate new y-z to y'-oldz coordinates by x-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = Node[i].getz();
+				YAxisCrdTrans(-Alpha[1], value);
+				Node[i].assignx(value[0]); Node[i].assignz(value[2]);
+			}
+  /****** rotate new x-y' to oldx-oldy coordinates by z-axis ******/
+			ZAxisCrdTrans(Alpha[0], value);
+			Node[i].assignx(value[0]); Node[i].assigny(value[1]);	// assign new coordinates  
+		}
+		for (i = 0; i< N; i++)			// transform DistParam
+		{
+			value[0] = DistParam[i].getx(); value[1] = DistParam[i].gety();		// old coordinates
+  /****** rotate y'-oldz to new y-z coordinates by x-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = DistParam[i].getz();
+				YAxisCrdTrans(-Alpha[1], value);
+				DistParam[i].assignx(value[0]); DistParam[i].assignz(value[2]);
+			}
+  /****** rotate oldx-oldy to new x-y' coordinates by z-axis ******/
+			ZAxisCrdTrans(Alpha[0], value);
+			DistParam[i].assignx(value[0]); DistParam[i].assigny(value[1]);	// assign new coordinates
+		}
+	}
+  /******	redefine typicla length used in Radial Basic Function	******/
+	if (Dim > 2)
+		YAxisCrdTrans(-Alpha[1], TypicalLenght);
+	ZAxisCrdTrans(Alpha[0], TypicalLenght);
+}
+void CrdTrf2MinVarDir(int num, Point* Position, double observedValue[][Dim], double* Alpha, 
+	Point* Node, Point* DistParam, double* TypicalLength, double* abs_max_value, double* abs_min_value)
+{
+/******	According to position and observe value to find a min varing direction,			*******/
+/******	then specify degree Alpha, to make it z-directionand. Thus transform 'position',*******/
+/******	'observed value', 'node', 'distparam', and find absolute maximum observed value.*******/
+/******	Finally transform 'typical length' to new coordinates									*******/
+	double min_vary_direc[Dim];		// minimum varing direction
+	double value[Dim];				// use in coordinates transform by representing old coordinates
+	int i, d;
+	MVAfunction(Position, observedValue, min_vary_direc);		// find minimum varying direction
+  /******	find transform degree	******/
+	specifyDegree(min_vary_direc, Alpha);
+  /******	according given Alpha[0] = alpha, Alpha[1] = gamma to transform coordinates	******/
+	if (Dim == 1)
+		cout << "This is a one-dimensional problem, need not coordinates transform!" << endl;
+	if (Dim > 1)
+	{
+		for (i = 0; i< num; i++)		// transform position and observed value
+		{
+    /****** rotate oldx-oldy to new x-y' coordinates by z-axis ******/
+			value[0] = Position[i].getx();	value[1] = Position[i].gety();	// old coordinates
+			ZAxisCrdTrans(Pi/2.-Alpha[0], value);
+			Position[i].assignx(value[0]); Position[i].assigny(value[1]);	// assign new coordinates
+			ZAxisCrdTrans(Pi/2.-Alpha[0], observedValue[i]);
+    /****** rotate y'-oldz to new y-z coordinates by x-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = Position[i].getz();
+				XAxisCrdTrans(-Alpha[1], value);
+				Position[i].assigny(value[1]); Position[i].assignz(value[2]);
+				XAxisCrdTrans(-Alpha[1], observedValue[i]);
+			}
+		}
+		for (i = 0; i< N; i++)			// transform Node
+		{
+    /****** rotate oldx-oldy to new x-y' coordinates by z-axis ******/
+			value[0] = Node[i].getx();	value[1] = Node[i].gety();	// old coordinates
+			ZAxisCrdTrans(Pi / 2. - Alpha[0], value);
+			Node[i].assignx(value[0]); Node[i].assigny(value[1]);	// assign new coordinates
+    /****** rotate y'-oldz to new y-z coordinates by x-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = Node[i].getz();
+				XAxisCrdTrans(-Alpha[1], value);
+				Node[i].assigny(value[1]); Node[i].assignz(value[2]);
+			}
+		}
+		for (i = 0; i< N; i++)			// transform DistParam
+		{
+    /****** rotate oldx-oldy to new x-y' coordinates by z-axis ******/
+			value[0] = DistParam[i].getx();	value[1] = DistParam[i].gety();	// old coordinates
+			ZAxisCrdTrans(Pi / 2. - Alpha[0], value);
+			DistParam[i].assignx(value[0]); DistParam[i].assigny(value[1]);	// assign new coordinates
+    /****** rotate y'-oldz to new y-z coordinates by x-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = DistParam[i].getz();
+				XAxisCrdTrans(-Alpha[1], value);
+				DistParam[i].assigny(value[1]); DistParam[i].assignz(value[2]);
+			}
+		}
+	}
+  /******	find the maximun or minum observed value	***************************************/
+	for (d = 0; d < Dim; d++)
+	{
+		abs_max_value[d] = abs(observedValue[0][d]);
+		abs_min_value[d] = abs(observedValue[0][d]);
+	}
+	for (i = 1; i < num; i++)
+	{
+		for (d = 0; d < Dim; d++)
+		{
+			if (abs(observedValue[i][d]) < abs_min_value[d])
+				abs_min_value[d] = abs(observedValue[i][d]);
+			if (abs(observedValue[i][d]) > abs_max_value[d])
+				abs_max_value[d] = abs(observedValue[i][d]);
+		}
+	}
+  /******	redefine typicla length used in Radial Basic Function	******/
+	ZAxisCrdTrans(Pi / 2. - Alpha[0], TypicalLength);
+	if (Dim > 2)
+		XAxisCrdTrans(-Alpha[1], TypicalLength);
+}
+void MVAfunction(Point* Position, double observedValue[][Dim], double* min_vary_direc)
+{
+/******	find minimum varying direction ******/
+	min_vary_direc[0] = 0;
+	if (Dim > 1)
+	{
+		min_vary_direc[1] = 1;
+	}
+	if (Dim > 2)
+	{
+		min_vary_direc[2] = 0;
+	}
 }
 void specifyAY(double A[][N_Alpha], double* Y,	double observedValue[][Dim],
 	Point* Position, int Number_obserPosit, BasicFunction* Chi)

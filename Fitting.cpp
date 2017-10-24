@@ -40,7 +40,7 @@ int main()
 	BasicFunction Chi[N];							// Corresponding to different Nodal Function
 	double TypicalLength[Dim];						// typical length used in radial basic function
 	double Alpha[N_Alpha];							// for 1D/2D N_alpha = N; 
-	ifstream datain("craft_observed_value");
+	ifstream datain("craft_observed_value.dat");
 	ofstream dataout("modified_obsered_data.dat");	// write position and magnetic filed value
 	ofstream Resultout("RBF_Length_Node_Dist_Alpha.dat");		// write out Node, Distance Parameter, Alpha
 /******	specify craft's position relate to whole Structure, magnetic field value and number of observation data	******/
@@ -60,10 +60,14 @@ int main()
 	double* Alpha2 = new double[Dim]();										// second transformation degree
 	CrdTrf2MinVarDir(Number_obserPosit, Position, observedValue, Alpha2, 	// according to position and observe value to
 		Node, DistParam, TypicalLength, abs_max_value, abs_min_value);		// specify a min varing direction, make it z-direction and redifine Lx, Ly, Lz
-//	TypicalLength[0] = 0.4; TypicalLength[1] = 2;
+	//TypicalLength[0] = 0.4;// 0.4;
+	//if (Dim > 1)
+	//	TypicalLength[1] = 1;// 2;
+	//if (Dim > 2)
+	//	TypicalLength[2] = 2;
 	BasicFunction::assign_TypicalLength(TypicalLength);
 /******	use RBF to model magnetic field and write position, value, node, distance parameter and Typical Length	*******/
-	RBFModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use Radial Basic Function to re-model magnetic field
+//	RBFModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use Radial Basic Function to re-model magnetic field
 //	dataout << "data modified by c++ program " << endl;	dataout << "Position,     observerdValue" << endl;
 	write(Position, Number_obserPosit, dataout); write(observedValue, Number_obserPosit, dataout);
 	Resultout << BasicFunction::Lx << " " << BasicFunction::Ly << " " << BasicFunction::Lz << " " << endl;

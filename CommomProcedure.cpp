@@ -20,6 +20,12 @@ void CrdTrf2FlyDirec(int num, Point* Position, double observedValue[][Dim], doub
 	double(* CraftLeap)[Dim] = new double[Num_Crafts*(Num_obserPosit-1)][Dim];
 	double value[Dim];									// use in coordinates transform by representing old coordinates
 	int i, g;
+  /******	default value, collimate with x-direction which means no coordinates transform	******/
+	//flying_direction[0] = 1;
+	//if (Dim > 1)
+	//	flying_direction[1] = 0;
+	//if (Dim > 2)
+	//	flying_direction[2] = 0;
   /******	calculate flying direction by average distance vector	******/
 	for (g = 0; g < Num_Crafts; g++)
 	{
@@ -72,13 +78,13 @@ void CrdTrf2FlyDirec(int num, Point* Position, double observedValue[][Dim], doub
 	min_posit[0] = Position[0].getx();
 	if (Dim > 1)
 	{
-		max_posit[1] = Position[1].gety();
-		min_posit[1] = Position[1].gety();
+		max_posit[1] = Position[0].gety();
+		min_posit[1] = Position[0].gety();
 	}
 	if (Dim > 2)
 	{
-		max_posit[2] = Position[2].getz();
-		min_posit[2] = Position[2].getz();
+		max_posit[2] = Position[0].getz();
+		min_posit[2] = Position[0].getz();
 	}
 	for (i = 1; i < num; i++)
 	{

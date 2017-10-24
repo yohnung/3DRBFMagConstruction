@@ -356,11 +356,13 @@ void oncefit::getValue(double* fittingValue, Point& x, BasicFunction* bf)
 	int i = 0;
 	if (Dim == 1)
 	{
+		fittingValue[0] = 0;
 		for (i = 0; i < N; i++)
 			fittingValue[0] += Alpha[i] * bf[i].getValue(x);
 	}
 	if (Dim == 2)
 	{
+		fittingValue[0] = 0; fittingValue[1] = 0;
 		for (i = 0; i < N; i++)
 		{
 			fittingValue[0] += Alpha[i] * bf[i].get_yDeriv(x);
@@ -374,6 +376,7 @@ void oncefit::getValue(double* fittingValue, Point& x, BasicFunction* bf)
 		double(*SecondDeriv)[Dim] = new double[Dim][Dim]();
 		double* ScalarDeriv = new double();
 		Px = x.getx(); Py = x.gety(); Pz = x.getz(); r = x.getradialLength();
+		fittingValue[0] = 0; fittingValue[1] = 0; fittingValue[2] = 0;
 		for (i = 0; i < N; i++)
 		{
 			bf[i].getDerivative(x, FirstDeriv, SecondDeriv, ScalarDeriv);

@@ -116,9 +116,9 @@ void magisland(double* value, Point& var)
 	double oldx, oldy, oldz;							// old coordinates
 	double Bx, By, Bz;
 	double delta_psi = island_Magnit;					// delta_psi = island_Magnit*cos(kx*x)*cos(ky*y)
-	double kx = 3.141592653589793 / (3 * Length_Scale);
-	double ky = 2 * 3.141592653589793 / (3 * Length_Scale);
-	double kz = 2 * 3.141592653589793 / (3 * Length_Scale);
+	double kx = Pi / (3 * Length_Scale);
+	double ky = 2 * Pi / (3 * Length_Scale);
+	double kz = 2 * Pi / (3 * Length_Scale);
 	if (Dim > 1)	// By is guide field
 	{
 /****** rotate x-y to older coordinates ******/
@@ -133,15 +133,15 @@ void magisland(double* value, Point& var)
 			oldx = oldx * cos(degreey) - z * sin(degreey);
 		}
 /****** compute magnetic field value in oldx-lody-oldz	******/	
-		By = tanh(oldx / Length_Scale);
+		By = tanh(oldx / Length_Scale);			// B\vec = e\hat_z \times \nabla\psi
 		Bx = ky*delta_psi*cos(kx*oldx)*sin(ky*oldy);
 		By += -kx*delta_psi*sin(kx*oldx)*cos(ky*oldy);
 		value[0] = Bx;
 		if (Dim > 2)			//  y component is guide field
 		{
 			Bz = tanh(oldx / Length_Scale);
-			Bx = -kz*delta_psi*cos(kx*oldx)*sin(kz*oldz);
-			Bz += kx*delta_psi*sin(kx*oldx)*cos(kz*oldz);
+			Bx =   kz*delta_psi*cos(kx*oldx)*sin(kz*oldz);
+			Bz += -kx*delta_psi*sin(kx*oldx)*cos(kz*oldz);
 			By = 0.5;
 /******* rotate vector from oldx-oldz to oldx-z	******/
 			value[0] = Bx * cos(degreey) + Bz * sin(degreey);
@@ -160,11 +160,11 @@ void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, doub
 	int i, j;
 	for (i = 0; i < N; i++)
 		Chi[i].specify(Node[i], DistParam[i]);
-//	for (i = 0; i < N_Alpha; i++)
-//		Alpha[i] = i + 10;
-	Alpha[0] = 15;
-	Alpha[3] = -7;
-	Alpha[5] = 23;
+	for (i = 0; i < N_Alpha; i++)
+		Alpha[i] = i + 10;
+//	Alpha[0] = 15;
+//	Alpha[3] = -7;
+//	Alpha[5] = 23;
 	fitting.assignParameter(Alpha);
 	for (i = 0; i < num; i++)
 		fitting.getValue(observedValue[i], Position[i], Chi);

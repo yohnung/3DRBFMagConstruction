@@ -20,6 +20,8 @@ extern double Length_Scale;		// preset Model 'island Magnetic Field's typical le
 extern double island_Magnit;	// related to 'island Magnetic Field's island width = sqrt(4*Length_Scale*island_Magnit)
 extern double degreez;			// 45 degree rotate coordinates of z-axis
 extern double degreey;			// 10 degree rotate corrdinate of x-axis#pragma once
+/******	choose what model you want use	******/
+extern char   model;			// SEPARATORMODEL for separator model; RBFMODEL for RBF-model; DEFAULT for no model
 /******	Parameter used in solver	******************************/
 extern double cutoff;		// When we solve the problem using SVD, omit singular value using this parameter
 extern double tolerance;	// when B is lower than tolerance*max_value, the related equation will be wholely divided by B 

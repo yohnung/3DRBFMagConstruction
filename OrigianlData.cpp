@@ -152,6 +152,25 @@ void magisland(double* value, Point& var)
 		value[0] = value[0] * cos(degreez) - By * sin(degreez);
 	}	
 }
+void ModelField(int num, Point* Node, Point* DistParam, Point* Position, double Value[][Dim])
+{
+	int i;
+	if (model == SEPARATORMODEL)
+		SeparatorField(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
+	else if (model == RBFMODEL)
+		RBFModelField(num, Node, DistParam, Position, Value);	// use Separator Model to model a magnetic field
+	else if (model == CURRENTSHEET)
+	{
+		if (Dim == 1)
+			for (i = 0; i < num; i++)
+				Value[i][0] = tanhtofit(Position[i]);			// f(x,y,z) to be fitted, specified manually
+		if (Dim > 1)
+			for (i = 0; i < num; i++)
+				magisland(Value[i], Position[i]);				// magnetic island configuration
+	}
+	else
+		cout << "You should read data from real observation file, do you really do that?" << endl;
+}
 void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, double observedValue[][Dim])
 {
 	BasicFunction *Chi = new BasicFunction[N]();
@@ -171,5 +190,26 @@ void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, doub
 	delete[] Alpha;
 	delete[] Chi;
 }
-
+ void SeparatorField(int num, Point* Position, double Value[][Dim])
+{
+/******	use Separator Model to model a magnetic field, please refer to Guo, 2013, JGR -> Pontin[2011]	******/
+	 double B0 = 1;
+	 double typical_length = 5;
+	 double Bx, By, Bz;
+	 double x, y, z;
+	 int i, j;
+	 
+	 for (i = 0; i < num; i++)
+	 {
+		 x = Position[i].getx();
+		 y = Position[i].gety();
+		 z = Position[i].getz();
+		 Bx = B0 * x * (y - 3 * typical_length);
+		 By = B0 * (typical_length * typical_length - y * y + 0.5 * (x * x + z * z));
+		 Bz = B0 * z * (y + 3 * typical_length);
+		 Value[i][0] = Bx;
+		 Value[i][1] = By;
+		 Value[i][2] = Bz;
+	 }
+}
 

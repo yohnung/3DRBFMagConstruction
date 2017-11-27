@@ -284,6 +284,103 @@ void constructNodesWeb(double* max_posit, double* min_posit, Point* Node, Point*
 	dimout << Dim << endl << Nx << endl << Ny << endl << Nz << endl;
 	dimout.close();
 }
+void initiateGridPoint(double* max_posit, double* min_posit, Point* Grid)
+{
+	/******	construct the web of Grids	******/
+	Point max_Position, min_Position;
+	max_Position.specify(max_posit); min_Position.specify(min_posit);
+	double* meandist = new double[Dim]();				// mean distance between grids
+	Point* meanDelta = new Point[Dim]();				// to instruct the web of grids
+	int i, j, k;
+	/******	specify meandist and meanDelta by 1.4*(max_posit-min_posit)/(Num-1)	**********************************/
+	if (GNx == 1)
+	{
+		cout << "Caution!   There is only 1 Grid" << endl;
+		meandist[0] = 0;
+	}
+	else
+	{
+		meandist[0] = 1.4 * (max_posit[0] - min_posit[0]) / (GNx - 1);
+	}
+	meanDelta[0].assignx(meandist[0]);
+	if (Dim > 1)
+	{
+		if (GNy == 1)
+		{
+			cout << " This is a two dimensional problem, but there is only 1-dimension ";
+			cout << " distributed Grids along x-direction" << endl;
+			meandist[1] = 0;
+		}
+		else
+		{
+			meandist[1] = 1.4 * (max_posit[1] - min_posit[1]) / (GNy - 1);
+		}
+		meanDelta[1].assigny(meandist[1]);
+	}
+	if (Dim > 2)
+	{
+		if (GNz == 1)
+		{
+			cout << "This is a three dimensional problem, but there is only 2-dimension";
+			cout << "distributed Grids in x-y plane" << endl;
+			meandist[2] = 0;
+		}
+		else
+		{
+			meandist[2] = 1.4 * (max_posit[2] - min_posit[2]) / (GNz - 1);
+		}
+		meanDelta[2].assignz(meandist[2]);
+	}
+	Grid[0] = min_Position - 0.2 * (max_Position - min_Position);
+	/******* construct the web of Grids		**********************************************************************/
+	for (i = 1; i < GNx; i++)
+	{
+		if (Dim > 1)
+		{
+			for (j = 1; j < GNy; j++)
+			{
+				if (Dim > 2)
+					for (k = 1; k < GNz; k++)
+					{
+						Grid[k*GNx*GNy + (j - 1)*GNx + (i - 1)] = Grid[(k - 1)*GNx*GNy
+							+ (j - 1)*GNx + (i - 1)] + meanDelta[2];				// every time z plus a meanDelta[2]
+					}
+				Grid[j*GNx + (i - 1)] = Grid[(j - 1)*GNx + (i - 1)] + meanDelta[1];	// every time y plus a meanDelta[1]
+			}
+			if (Dim > 2)
+				for (k = 1; k < GNz; k++)
+				{
+					Grid[k*GNx*GNy + (GNy - 1)*GNx + (i - 1)] = Grid[(k - 1)*GNx*GNy
+						+ (GNy - 1)*GNx + (i - 1)] + meanDelta[2];
+				}
+		}
+		Grid[i] = Grid[i - 1] + meanDelta[0];										// every time x plus a meanDelta[0]
+	}
+	if (Dim > 1)
+	{
+		for (j = 1; j < GNy; j++)
+		{
+			if (Dim > 2)
+				for (k = 1; k < GNz; k++)
+				{
+					Grid[k*GNx*GNy + (j - 1)*GNx + GNx - 1] =
+						Grid[(k - 1)*GNx*GNy + (j - 1)*GNx + GNx - 1] + meanDelta[2];
+				}
+			Grid[j*GNx + GNx - 1] = Grid[(j - 1)*GNx + GNx - 1] + meanDelta[1];
+		}
+		if (Dim > 2)
+			for (k = 1; k < GNz; k++)
+			{
+				Grid[k*GNx*GNy + (GNy - 1)*GNx + GNx - 1] =
+					Grid[(k - 1)*GNx*GNy + (GNy - 1)*GNx + GNx - 1] + meanDelta[2];
+			}
+	}
+	delete[] meandist;
+	delete[] meanDelta;
+	ofstream dimout("GridDimensionInformation.dat");	// write out grid-dimension infromation
+	dimout << Dim << endl << GNx << endl << GNy << endl << GNz << endl;
+	dimout.close();
+}
 void CrdTrfFromFlyDirec(int num, double* Alpha, Point* Position, double observedValue[][Dim], 
 	Point* Node, Point* DistParam, double* TypicalLenght)
 {
@@ -344,6 +441,32 @@ void CrdTrfFromFlyDirec(int num, double* Alpha, Point* Position, double observed
 	if (Dim > 2)
 		YAxisCrdTrans(-Alpha[1], TypicalLenght);
 	ZAxisCrdTrans(Alpha[0], TypicalLenght);
+}
+ void CrdTrfFromFlyDirec(int num, double* Alpha, Point* Grid)
+{
+/****** coordinates transform form x-flying direction to original one according to degree Alpha ******/
+	 double value[Dim];
+	 int i;
+	 if (Dim == 1)
+		 cout << "This is a one-dimensional problem, need not coordinates transform!" << endl;
+	 if (Dim > 1)
+	 {
+		 for (i = 0; i< num; i++)			// transform Node
+		 {
+
+			 value[0] = Grid[i].getx(); value[1] = Grid[i].gety();				// old coordinates
+																				/****** rotate new y-z to y'-oldz coordinates by x-axis	******/
+			 if (Dim > 2)
+			 {
+				 value[2] = Grid[i].getz();
+				 YAxisCrdTrans(-Alpha[1], value);
+				 Grid[i].assignx(value[0]); Grid[i].assignz(value[2]);
+			 }
+	/****** rotate new x-y' to oldx-oldy coordinates by z-axis ******/
+			 ZAxisCrdTrans(Alpha[0], value);
+			 Grid[i].assignx(value[0]); Grid[i].assigny(value[1]);	// assign new coordinates  
+		 }		 
+	 }
 }
 void CrdTrf2MinVarDir(int num, Point* Position, double observedValue[][Dim], double* Alpha, 
 	Point* Node, Point* DistParam, double* TypicalLength, double* abs_max_value, double* abs_min_value)
@@ -428,6 +551,32 @@ void CrdTrf2MinVarDir(int num, Point* Position, double observedValue[][Dim], dou
 	ZAxisCrdTrans(Pi / 2. - Alpha[0], TypicalLength);
 	if (Dim > 2)
 		XAxisCrdTrans(-Alpha[1], TypicalLength);
+}
+void CrdTrf2FlyDirec(int num, double* Alpha, Point* Grid)
+{
+/******	according to degree Alpha, transform y-axis to desired one, thus transform 'grid point',*******/
+	double value[Dim];				// use in coordinates transform by representing old coordinates
+	int i;
+  /******	according given Alpha[0] = alpha, Alpha[1] = gamma to transform coordinates	******/
+	if (Dim == 1)
+		cout << "This is a one-dimensional problem, need not coordinates transform!" << endl;
+	if (Dim > 1)
+	{
+		for (i = 0; i< num; i++)		// transform position and observed value
+		{
+    /****** rotate oldx-oldy to new x-y' coordinates by z-axis ******/
+			value[0] = Grid[i].getx();	value[1] = Grid[i].gety();	// old coordinates
+			ZAxisCrdTrans(Pi / 2. - Alpha[0], value);
+			Grid[i].assignx(value[0]); Grid[i].assigny(value[1]);	// assign new coordinates
+    /****** rotate y'-oldz to new y-z coordinates by x-axis	******/
+			if (Dim > 2)
+			{
+				value[2] = Grid[i].getz();
+				XAxisCrdTrans(-Alpha[1], value);
+				Grid[i].assigny(value[1]); Grid[i].assignz(value[2]);
+			}
+		}
+	}	
 }
 void MVAfunction(Point* Position, double observedValue[][Dim], double* min_vary_direc)
 {
@@ -752,5 +901,170 @@ void write(double* rcond, double Matrix[][N_Alpha], ofstream& filename)
 		}
 		filename << endl;
 	}
-
+}
+void write_tecplot(Point* Grid, double Value[][Dim], int num, ofstream& filename)
+{
+	int i, j, k;
+	double x, y, z;
+	double Bx, By, Bz, ScalarB;
+	filename << "variables = \"x\"";
+	if (Dim > 1)
+		filename << ", \"y\"";
+	if (Dim > 2)
+		filename << ", \"z\"";
+	filename << ", \"Bx\"";
+	if (Dim > 1)
+		filename << ", \"By\"";
+	if (Dim > 2)
+		filename << ", \"Bz\"";
+	filename << ", \"B\"";
+	filename << endl;
+	filename << "zone t = \"main zone\" " << endl;
+//	filename << " strandid = 1, solutiontime = 0" << endl;
+	filename << " i = " << GNx;
+	if (Dim > 1)
+		filename << " , j = " << GNy;
+	if (Dim > 2)
+		filename << " , k = " << GNz;
+	filename << endl;
+	filename << setiosflags(ios::scientific) << setprecision(5);
+	for (i = 0; i < GN; i++)
+	{
+		filename << " ";
+		if (Dim == 1)
+		{
+			x = Grid[i].getx();
+			filename << x << " ";
+			Bx = Value[i][0];
+			filename << Bx << " ";
+			ScalarB = abs(Bx);
+			filename << ScalarB << " ";
+		}
+		if (Dim == 2)
+		{
+			x = Grid[i].getx();
+			filename << x << " ";
+			y = Grid[i].gety();
+			filename << y << " ";
+			Bx = Value[i][0];
+			By = Value[i][1];
+			ScalarB = sqrt(Bx * Bx + By * By);
+			filename << Bx << " ";
+			filename << By << " ";
+			filename << ScalarB << " ";
+		}
+		if (Dim == 3)
+		{
+			x = Grid[i].getx();
+			filename << x << " ";
+			y = Grid[i].gety();
+			filename << y << " ";
+			z = Grid[i].getz();
+			filename << z << " ";
+			Bx = Value[i][0];
+			By = Value[i][1];
+			Bz = Value[i][2];
+			ScalarB = sqrt(Bx * Bx + By * By);
+			filename << Bx << " ";
+			filename << By << " ";
+			filename << Bz << " ";
+			filename << ScalarB << " ";
+		}
+		filename << endl;
+	}
+}
+void write_tecplot(Point* Grid, double fittedValue[][Dim], double modelValue[][Dim], int num, ofstream& filename)
+{
+	int i, j, k;
+	double x, y, z;
+	double Bx, By, Bz, ScalarB;
+	filename << "variables = \"x\"";
+	if (Dim > 1)
+		filename << ", \"y\"";
+	if (Dim > 2)
+		filename << ", \"z\"";
+	filename << ", \"model_Bx\"";
+	if (Dim > 1)
+		filename << ", \"model_By\"";
+	if (Dim > 2)
+		filename << ", \"model_Bz\"";
+	filename << ", \"model_B\"";
+	filename << ", \"fitted_Bx\"";
+	if (Dim > 1)
+		filename << ", \"fitted_By\"";
+	if (Dim > 2)
+		filename << ", \"fitted_Bz\"";
+	filename << ", \"fitted_B\"";
+	filename << endl;
+	filename << "zone t = \"main zone\" " << endl;
+//	filename << " strandid = 1, solutiontime = 0" << endl;
+	filename << " i = " << GNx;
+	if (Dim > 1)
+		filename << " , j = " << GNy;
+	if (Dim > 2)
+		filename << " , k = " << GNz;
+	filename << endl;
+	filename << setiosflags(ios::scientific) << setprecision(5);
+	for (i = 0; i < GN; i++)
+	{
+		filename << " ";
+		if (Dim == 1)
+		{
+			x = Grid[i].getx();
+			filename << x << " ";
+			Bx = modelValue[i][0];
+			filename << Bx << " ";
+			ScalarB = abs(Bx);
+			filename << ScalarB << " ";
+			Bx = fittedValue[i][0];
+			filename << Bx << " ";
+			ScalarB = abs(Bx);
+			filename << ScalarB << " ";
+		}
+		if (Dim == 2)
+		{
+			x = Grid[i].getx();
+			filename << x << " ";
+			y = Grid[i].gety();
+			filename << y << " ";
+			Bx = modelValue[i][0];
+			By = modelValue[i][1];
+			ScalarB = sqrt(Bx * Bx + By * By);
+			filename << Bx << " ";
+			filename << By << " ";
+			filename << ScalarB << " ";
+			Bx = fittedValue[i][0];
+			By = fittedValue[i][1];
+			ScalarB = sqrt(Bx * Bx + By * By);
+			filename << Bx << " ";
+			filename << By << " ";
+			filename << ScalarB << " ";
+		}
+		if (Dim == 3)
+		{
+			x = Grid[i].getx();
+			filename << x << " ";
+			y = Grid[i].gety();
+			filename << y << " ";
+			z = Grid[i].getz();
+			filename << z << " ";
+			Bx = modelValue[i][0];
+			By = modelValue[i][1];
+			Bz = modelValue[i][2];
+			ScalarB = sqrt(Bx * Bx + By * By);
+			filename << Bx << " ";
+			filename << By << " ";
+			filename << Bz << " ";
+			filename << ScalarB << " ";
+			Bx = fittedValue[i][0];
+			By = fittedValue[i][1];
+			Bz = fittedValue[i][2];
+			ScalarB = sqrt(Bx * Bx + By * By);
+			filename << Bx << " ";
+			filename << By << " ";
+			filename << Bz << " ";
+			filename << ScalarB << " ";
+		}
+		filename << endl;
+	}
 }

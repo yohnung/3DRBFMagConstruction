@@ -40,8 +40,9 @@ int main()
 	BasicFunction Chi[N];							// Corresponding to different Nodal Function
 	double TypicalLength[Dim];						// typical length used in radial basic function
 	double Alpha[N_Alpha];							// for 1D/2D N_alpha = N; 
+	Point* Grid = new Point[GN]();					// GN is the number of Grid with GN = GNx * GNy * GNz, which are used to diagnose
 	ifstream datain("craft_observed_value.dat");
-	ofstream dataout("modified_obsered_data.dat");	// write position and magnetic filed value
+	ofstream dataout("modified_observed_data_fitting_data.dat");	// write position and magnetic filed value
 	ofstream Resultout("RBF_Length_Node_Dist_Alpha.dat");		// write out Node, Distance Parameter, Alpha
 /******	specify craft's position relate to whole Structure, magnetic field value and number of observation data	******/
 	double* max_posit = new double[Dim]();									// max_position_x, max_position_y, max_position_z;
@@ -53,8 +54,10 @@ int main()
 		max_posit, min_posit);
 /******	construct a web of Nodes and specify Basic Functions	******************************************************/
 	constructNodesWeb(max_posit, min_posit, Node, DistParam, TypicalLength);// construct web of node and specify Typical Length and max,min position
+	initiateGridPoint(max_posit, min_posit, Grid);							// initialize diagnosing grid mesh
 	CrdTrfFromFlyDirec(Number_obserPosit, Alpha1, Position, observedValue, 
 		Node, DistParam, TypicalLength);									// coordinates transform form x-flying direction to original one
+	CrdTrfFromFlyDirec(GN, Alpha1, Grid);
 	double* abs_max_value = new double[Dim]();								// max observed value
 	double* abs_min_value = new double[Dim]();								// minimum observed value
 	double* Alpha2 = new double[Dim]();										// second transformation degree
@@ -65,9 +68,10 @@ int main()
 	//	TypicalLength[1] = 1;// 2;
 	//if (Dim > 2)
 	//	TypicalLength[2] = 2;
+	CrdTrf2FlyDirec(GN, Alpha2, Grid);
 	BasicFunction::assign_TypicalLength(TypicalLength);
 /******	use RBF to model magnetic field and write position, value, node, distance parameter and Typical Length	*******/
-//	RBFModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use Radial Basic Function to re-model magnetic field
+	ModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use model field to model magnetic field 
 //	dataout << "data modified by c++ program " << endl;	dataout << "Position,     observerdValue" << endl;
 	write(Position, Number_obserPosit, dataout); write(observedValue, Number_obserPosit, dataout);
 	Resultout << BasicFunction::Lx << " " << BasicFunction::Ly << " " << BasicFunction::Lz << " " << endl;
@@ -90,8 +94,27 @@ int main()
 	fitting.assignParameter( Alpha );										
 	for (int i = 0; i < Number_obserPosit; i++)
 		fitting.getValue(fittedValue[i], Position[i], Chi);
-/****** close file, recycle dynamic memory and terminate the code	**************************************************/
+	write(fittedValue, Number_obserPosit, dataout);
 	delete[] fittedValue;
+/******	using */
+	fittedValue = new double[GN][Dim]();
+	double(*modelValue)[Dim] = new double[GN][Dim]();
+	ofstream modelfieldout("model_MagField_for_tecplot.dat");		// write our field value at grid point in Tecplot Format
+	ofstream fittedfieldout("RBF_fitted_MagField_for_tecplot.dat");	// write out field value at grid point in Tecplot Format
+	ofstream fieldout("MagField_fitted_and_model_for_tecplot.dat");	// write out field value of fitted result and model result in Tecplot Format
+	for (int i = 0; i < GN; i++)
+		fitting.getValue(fittedValue[i], Grid[i], Chi);
+	fittedfieldout << "title = \"RBF fitted magnetic field value at grid point\"" << endl;
+	write_tecplot(Grid, fittedValue, GN, fittedfieldout);	
+	ModelField(GN, Node, DistParam, Grid, modelValue);
+	modelfieldout << "title = \"real field value at grid point\"" << endl;
+	write_tecplot(Grid, modelValue, GN, modelfieldout);
+//	write_tecplot(Grid, fittedValue, modleValue, GN, fieldout);
+	delete[] fittedValue;
+	delete[] modelValue;
+	modelfieldout.close();
+	fittedfieldout.close();
+/****** close file, recycle dynamic memory and terminate the code	**************************************************/
 	delete[] Y;
 	delete[] A;
 	delete[] Alpha2;
@@ -101,6 +124,7 @@ int main()
 	delete[] min_posit;
 	delete[] max_posit;
 	delete[] observedValue;
+	delete[] Grid;
 	delete[] Position;
 	Resultout.close();
 	dataout.close();

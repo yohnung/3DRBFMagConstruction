@@ -9,7 +9,7 @@ void initiateGridPoint(double*, double*, Point*);
 void CrdTrfFromFlyDirec(int, double*, Point*, double[][Dim], Point*, Point*, double*);
 void CrdTrfFromFlyDirec(int, double*, Point*);
 void CrdTrf2MinVarDir(int, Point*, double[][Dim], double*, Point*, Point*, double*, double*, double*);
-void CrdTrf2FlyDirec(int, double*, Point*);
+void CrdTrf2MinVarDir(int, double*, Point*);
 void MVAfunction(Point*, double[][Dim], double*);
 void specifyAY(double[][N_Alpha], double*, double[][Dim], Point*, int, BasicFunction*);
 void generalSolver(double*, Point*, double[][Dim], int, BasicFunction*);

@@ -20,7 +20,7 @@ void CrdTrf2FlyDirec(int num, Point* Position, double observedValue[][Dim], doub
 	double(* CraftLeap)[Dim] = new double[Num_Crafts*(Num_obserPosit-1)][Dim];
 	double value[Dim];									// use in coordinates transform by representing old coordinates
 	int i, g;
-  /******	default value, collimate with x-direction which means no coordinates transform	******/
+  /******	defaultly coordinate is collimated with x-direction which means no coordinates transform	******/
 	//flying_direction[0] = 1;
 	//if (Dim > 1)
 	//	flying_direction[1] = 0;
@@ -472,7 +472,7 @@ void CrdTrf2MinVarDir(int num, Point* Position, double observedValue[][Dim], dou
 	Point* Node, Point* DistParam, double* TypicalLength, double* abs_max_value, double* abs_min_value)
 {
 /******	According to position and observe value to find a min varing direction,			*******/
-/******	then specify degree Alpha, to make it z-directionand. Thus transform 'position',*******/
+/******	then specify degree Alpha, to make it y-directionand. Thus transform 'position',*******/
 /******	'observed value', 'node', 'distparam', and find absolute maximum observed value.*******/
 /******	Finally transform 'typical length' to new coordinates									*******/
 	double min_vary_direc[Dim];		// minimum varing direction
@@ -552,7 +552,7 @@ void CrdTrf2MinVarDir(int num, Point* Position, double observedValue[][Dim], dou
 	if (Dim > 2)
 		XAxisCrdTrans(-Alpha[1], TypicalLength);
 }
-void CrdTrf2FlyDirec(int num, double* Alpha, Point* Grid)
+void CrdTrf2MinVarDir(int num, double* Alpha, Point* Grid)
 {
 /******	according to degree Alpha, transform y-axis to desired one, thus transform 'grid point',*******/
 	double value[Dim];				// use in coordinates transform by representing old coordinates
@@ -739,8 +739,8 @@ void LinearQRSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_ob
 {
 /******	directly solve A * alpha = y using QR Factorization	******/
 	double *tempAlpha = new double[N_Alpha]();
-	double* a = new double[Dim * Number_obserPosit * N_Alpha]();			// restore A matrix
-	double* c = new double[Dim * Number_obserPosit]();						// restore observed value
+	double* a = new double[Dim * Number_obserPosit * N_Alpha]();			// re-store A matrix
+	double* c = new double[Dim * Number_obserPosit]();						// re-store observed value
 	double* tau = new double[N_Alpha]();									// temp matrix
 	int i, j, k, d;															// define a, c matrix or array using advanced approach
 	for (i = 0; i < Number_obserPosit; i++)
@@ -763,7 +763,7 @@ void LinearQRSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_ob
 	}
 /****** solving the problem by resorting to LAPACK(Linear Algebric Package) library	******/
 	LAPACKE_dgeqrf(LAPACK_ROW_MAJOR, Dim * Number_obserPosit, N_Alpha, a, N_Alpha, tau);							// QR factorization, which gives that A = Q * R which Q is 2*Number_obserPosit-by-N matrix and R is N-by-N matrix
-	LAPACKE_dormqr(LAPACK_ROW_MAJOR, 'L', 'T', Dim * Number_obserPosit, 1, N_Alpha, a, N_Alpha, tau, c, 1);			// compute C = Q^T * C, Q is restored in a
+	LAPACKE_dormqr(LAPACK_ROW_MAJOR, 'L', 'T', Dim * Number_obserPosit, 1, N_Alpha, a, N_Alpha, tau, c, 1);			// compute C = Q^T * C, Q is re-stored in a
 	cblas_dtrsm(CblasRowMajor, CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit, N_Alpha, 1, 1, a, N_Alpha, c, 1);	// Comute R * x = C and C is overwittedn by the solution matrix x
 	for (i = 0; i < N_Alpha; i++)
 		tempAlpha[i] = c[i];
@@ -782,13 +782,13 @@ void LinearQRSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_ob
 void LinearSVDSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_obserPosit, double* abs_max_value, double acond)
 {
 	double *tempAlpha = new double[N_Alpha]();
-	double* a = new double[Dim * Number_obserPosit * N_Alpha]();		// restore A matrix
-	double* c = new double[Dim * Number_obserPosit]();					// restore observed value
+	double* a = new double[Dim * Number_obserPosit * N_Alpha]();		// re-store A matrix
+	double* c = new double[Dim * Number_obserPosit]();					// re-store observed value
 	double* singularValue = new double[N_Alpha]();
 	int* rank = new int();
 	double rcond;
 	if (acond > 0)
-		rcond = cutoff * sqrt(acond);								// cond(A^T*A) = cond(A)^2 
+		rcond = cutoff * sqrt(acond);									// cond(A^T*A) = cond(A)^2 
 	else
 		rcond = -1;
 	int i, j, k, d;														// define a, c matrix or array again! Remember again!

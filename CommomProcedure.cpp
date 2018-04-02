@@ -442,7 +442,7 @@ void CrdTrfFromFlyDirec(int num, double* Alpha, Point* Position, double observed
 		YAxisCrdTrans(-Alpha[1], TypicalLenght);
 	ZAxisCrdTrans(Alpha[0], TypicalLenght);
 }
- void CrdTrfFromFlyDirec(int num, double* Alpha, Point* Grid)
+void CrdTrfFromFlyDirec(int num, double* Alpha, Point* Grid)
 {
 /****** coordinates transform form x-flying direction to original one according to degree Alpha ******/
 	 double value[Dim];
@@ -1067,4 +1067,27 @@ void write_tecplot(Point* Grid, double fittedValue[][Dim], double modelValue[][D
 		}
 		filename << endl;
 	}
+}
+void write_satellite_position(Point* Position)
+{
+/******	write out the satellite's position evolving with time	******/
+	int Num_obserPosit = M;
+	int i, j;
+	ofstream fileout("statellite_position_over_time.dat");
+	fileout << "title = \"Satellite's position varing with time\"" << endl;
+	fileout << "variables = \"x\", \"y\", \"z\"" << endl;
+	for (i = 0; i < Num_obserPosit; i++)
+	{
+		fileout << "zone nodes = 4, elements=1, datapacking=point, zonetype=fetetrahedron" << endl;
+		fileout << "  strandid = 1, solutiontime = " << i << endl;
+		fileout << Position[i].getx() << " " << Position[i].gety() << " " << Position[i].getz() << endl;
+		j = Num_obserPosit + i;
+		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
+		j = 2*Num_obserPosit + i;
+		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
+		j = 3*Num_obserPosit + i;
+		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
+		fileout << "1 2 3 4" << endl;
+	}
+	;
 }

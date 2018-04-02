@@ -22,3 +22,4 @@ void write(Point*, int, ofstream&);
 void write(double*, double[][N_Alpha], ofstream&);
 void write_tecplot(Point*, double[][Dim], int, ofstream&);
 void write_tecplot(Point*, double[][Dim], double[][Dim], int, ofstream&);
+void write_satellite_position(Point*);

@@ -42,7 +42,7 @@ int main()
 	double Alpha[N_Alpha];							// for 1D/2D N_alpha = N; 
 	Point* Grid = new Point[GN]();					// GN is the number of Grid with GN = GNx * GNy * GNz, which are used to diagnose
 	ifstream datain("craft_observed_value.dat");
-	ofstream dataout("modified_observed_data_fitting_data.dat");	// write out position and magnetic filed value after coordinates transformation
+	ofstream dataout("modified_observed_data_fitted_data.dat");		// write out position and magnetic filed value after coordinates transformation
 	ofstream Resultout("RBF_Length_Node_Dist_Alpha.dat");			// write out Node, Distance Parameter, Alpha
 /******	specify craft's position relate to whole Structure, magnetic field value and number of observation data	******/
 	double* max_posit = new double[Dim]();									// max_position_x, max_position_y, max_position_z;
@@ -69,10 +69,11 @@ int main()
 	//if (Dim > 2)
 	//	TypicalLength[2] = 2;			// manually assign value to typical length of Radial Basic Function
 	CrdTrf2MinVarDir(GN, Alpha2, Grid);
+	write_satellite_position(Position);
 	BasicFunction::assign_TypicalLength(TypicalLength);
 /******	use RBF to model magnetic field and write position, value, node, distance parameter and Typical Length	*******/
 	ModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use model field to model magnetic field 
-//	dataout << "coordinates transformed data written by c++ program " << endl;	dataout << "Position,     observerdValue" << endl;
+//	dataout << "coordinates transformed data written by c++ program " << endl;	dataout << "Position,    observerdValue,    fitted value" << endl;
 	write(Position, Number_obserPosit, dataout); write(observedValue, Number_obserPosit, dataout);
 	Resultout << BasicFunction::Lx << " " << BasicFunction::Ly << " " << BasicFunction::Lz << " " << endl;
 	write(Node, N, Resultout);	write(DistParam, N, Resultout);

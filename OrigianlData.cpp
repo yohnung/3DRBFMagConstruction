@@ -1,3 +1,5 @@
+#include<math.h>
+#include<iomanip>
 #include<random>
 #include<time.h>
 #include "MacroAndMostUsedLibrary.h"
@@ -50,7 +52,10 @@ int read(Point* Position, double observedValue[][Dim])
 	Position[0].specify(flying_posit);
 	default_random_engine generator(time(NULL));
 	uniform_real_distribution<double> distribution(0.1, 0.3);		// mean value is 0.25; can be modified
-/******	flying a space-craft, generating positionas		***********************************/
+/******	flying a space-craft, generating position as	******/
+/******			**3		******/
+/******		**4		2** ******/
+/******			**1		******/
 	for (g = 0; g < Num_Crafts; g++)								// g for different craft
 	{
 		if (g > 0)													// set for 2nd and 3rd craft
@@ -190,11 +195,9 @@ void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, doub
 	delete[] Alpha;
 	delete[] Chi;
 }
- void SeparatorField(int num, Point* Position, double Value[][Dim])
+void SeparatorField(int num, Point* Position, double Value[][Dim])
 {
-/******	use Separator Model to model a magnetic field, please refer to Guo, 2013, JGR -> Pontin[2011]	******/
-	 double B0 = 1;
-	 double typical_length = 5;
+/******	use Separator Model to model a magnetic field, please refer to Pontin[2011], Advances in Space Research	******/
 	 double Bx, By, Bz;
 	 double x, y, z;
 	 int i, j;
@@ -204,12 +207,77 @@ void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, doub
 		 x = Position[i].getx();
 		 y = Position[i].gety();
 		 z = Position[i].getz();
-		 Bx = B0 * x * (y - 3 * typical_length);
-		 By = B0 * (typical_length * typical_length - y * y + 0.5 * (x * x + z * z));
-		 Bz = B0 * z * (y + 3 * typical_length);
+		 Bx = Bmagnit * (x * (y - 3 * Null_Posit)
+			 + Currenct_along_Separator * (-40 * z * exp(-20 * (x*x + z*z))));
+		 By = Bmagnit * (Null_Posit * Null_Posit - y * y + 0.5 * (x * x + z * z));
+		 Bz = Bmagnit * (z * (y + 3 * Null_Posit)
+			 + Currenct_along_Separator * (40 * x * exp(-20 * (x*x + z*z))));
 		 Value[i][0] = Bx;
 		 Value[i][1] = By;
 		 Value[i][2] = Bz;
 	 }
+	 write_script_tecplot();
 }
-
+void write_script_tecplot()
+{
+/******	create 5 circle geometries which are the origin of streamtrace to be plotted in tecplot	******/
+	int nn = 7;							// 7 points
+	double rr = 0.1 * Null_Posit;
+	double* theta = new double[nn];
+	double tmptheta;
+	double x, y, z;
+	int i, j;
+	for (i = 0; i < nn; i++)
+		theta[i] = 2. * Pi / nn * (0.5 + i);
+	ofstream fileID("streamtrace_circle_geometry_for3D.mcr");
+	fileID << "#!MC 1410" << endl;
+	fileID << "$!VarSet |MFBD| = 'C:\\Program Files\\Tecplot\\Tecplot 360 EX 2016 R1' " << endl;
+	default_random_engine generator(time(NULL));
+	uniform_real_distribution<double> distribution(0., 0.5*(theta[1]-theta[0]));		// mean value is 0.25; can be modified
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C1 circle
+	{
+		x = rr * cos(theta[i] + tmptheta);
+		z = rr * sin(theta[i] + tmptheta);
+		y = 0;
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=0. Z=" << z << "}" << endl;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C2 circle
+	{
+		x = -.5;
+		z = 0 + rr * cos(theta[i] + tmptheta);
+		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C3 circle
+	{
+		x = .5;
+		z = 0 + rr * cos(theta[i] + tmptheta);
+		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C4 circle
+	{
+		z = -.5;
+		x = 0 + rr * cos(theta[i] + tmptheta);
+		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C5 circle
+	{
+		z = .5;
+		x = 0 + rr * cos(theta[i] + tmptheta);
+		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
+	}
+	fileID << "$!RemoveVar |MFBD|";
+}

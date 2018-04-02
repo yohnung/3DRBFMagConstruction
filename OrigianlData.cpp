@@ -1,28 +1,24 @@
+#include<math.h>
+#include<iomanip>
 #include<random>
 #include<time.h>
 #include "MacroAndMostUsedLibrary.h"
+#include "OverallVariablesDeclarification.h"
 using namespace std;
 #include "ClassClarification.h"
 #include "ProcedureClarification.h"
 #include "ReadingData.h"
 
-
-using namespace std;
-int read(Point* Position, double observedValue[][Dim], double* max_posit,
-	double* min_posit, double* abs_max_value, double* abs_min_value)
-{		
-/******	to do a coordinates transformation and specify the craft relative position	*******************************/
-	int Num_obserPosit;												// Number of observed position
-	int Num_Crafts;													// Number of Crafts
+int read(Point* Position, double observedValue[][Dim])
+{
+/******	generate the magnetic field value	*******************************/
+	int Num_obserPosit = M;										// Number of observed position
+	int Num_Crafts = GroupNumber;								// Number of Crafts
 	double* starting_posit = new double[Dim]();						// starting position (x,y,z)
 	double* flying_posit = new double[Dim]();						// flying position
 	double(*CraftsInterval)[Dim] = new double[10][Dim]();			// distance vector between maximum 10 different space-craft
 	double(*CraftLeap)[Dim] = new double[max_length][Dim]();		// space-craft's interval between two adjacent time
-	ifstream datain("OriginalObsevedData.dat");
-/******	do a coordinates transformation and specify magnetic field value in new coordinates	***********************/
-	CoordinatesTransform(observedValue, CraftsInterval, &Num_Crafts,
-		CraftLeap, &Num_obserPosit, datain);
-	datain.close();
+
 	int i, j, k, d, g;
 	for (i = 0; i < Num_obserPosit; i++)
 	{
@@ -34,7 +30,6 @@ int read(Point* Position, double observedValue[][Dim], double* max_posit,
 	}
 	starting_posit[0] = startx;
 	flying_posit[0] = startx;
-	max_posit[0] = startx; min_posit[0] = startx;
 	CraftsInterval[0][0] = Interval12x;								// Interval[0] means distance vector between 1st and 2nd
 	CraftsInterval[1][0] = Interval13x;								// Interval[1] for 1st and 3rd
 	CraftsInterval[2][0] = Interval14x;								// Interval[2] for 1st and 4th
@@ -42,8 +37,7 @@ int read(Point* Position, double observedValue[][Dim], double* max_posit,
 	{
 		starting_posit[1] = starty;
 		flying_posit[1] = starty;
-		max_posit[1] = starty; min_posit[1] = starty;
-		CraftsInterval[0][1] = Interval12y;	
+		CraftsInterval[0][1] = Interval12y;
 		CraftsInterval[1][1] = Interval13y;
 		CraftsInterval[2][1] = Interval14y;
 	}
@@ -51,81 +45,41 @@ int read(Point* Position, double observedValue[][Dim], double* max_posit,
 	{
 		starting_posit[2] = startz;
 		flying_posit[2] = startz;
-		max_posit[2] = startz; min_posit[2] = startz;
-		CraftsInterval[0][2] = Interval12z;	
+		CraftsInterval[0][2] = Interval12z;
 		CraftsInterval[1][2] = Interval13z;
 		CraftsInterval[2][2] = Interval14z;
 	}
 	Position[0].specify(flying_posit);
 	default_random_engine generator(time(NULL));
 	uniform_real_distribution<double> distribution(0.1, 0.3);		// mean value is 0.25; can be modified
-/******	flying a space-craft, generating positionas		***********************************/
+/******	flying a space-craft, generating position as	******/
+/******			**3		******/
+/******		**4		2** ******/
+/******			**1		******/
 	for (g = 0; g < Num_Crafts; g++)								// g for different craft
 	{
 		if (g > 0)													// set for 2nd and 3rd craft
 		{
 			for (d = 0; d < Dim; d++)
-			{
 				flying_posit[d] = starting_posit[d] + CraftsInterval[g - 1][d];
-				if (flying_posit[d] < min_posit[d])
-					min_posit[d] = flying_posit[d];
-				if (flying_posit[d] > max_posit[d])
-					max_posit[d] = flying_posit[d];
-			}
 			Position[g*Num_obserPosit].specify(flying_posit);
 		}
 		for (i = 1; i < Num_obserPosit; i++)						// for a specific craft
 		{
 			for (d = 0; d < Dim; d++)
-			{
-				flying_posit[d] += CraftLeap[i][d];	// + distribution(generator);		
-				if (flying_posit[d] < min_posit[d])
-					min_posit[d] = flying_posit[d];
-				if (flying_posit[d] > max_posit[d])
-					max_posit[d] = flying_posit[d];
-			}
+				flying_posit[d] += CraftLeap[i][d];	// + distribution(generator);
 			Position[g*Num_obserPosit + i].specify(flying_posit);
-		}		
+		}
 	}
-/******	model the observed value, should be done by `CoordinatesTransform` subprogram	***/
+/******	model the observed value	******/
 	if (Dim == 1)
 		for (i = 0; i < Num_Crafts*Num_obserPosit; i++)
 			observedValue[i][0] = tanhtofit(Position[i]);			// f(x,y,z) to be fitted, specified manually
 	if (Dim > 1)
-	{
-		Point* Node = new Point[N]();
-		Point* DistParam = new Point[N]();
-		constructNodesWeb(Node, DistParam, max_posit, min_posit);	// instruct web of node
 		for (i = 0; i < Num_Crafts*Num_obserPosit; i++)
-		{			
-			RBF_initial(observedValue[i], Position[i], Node, DistParam);
-//			magisland(observedValue[i], Position[i]);
-		}
-		delete[] Node;
-		delete[] DistParam;
-	}
-/******	find the maximun or minum observed value	***************************************/
-	for (d = 0; d < Dim; d++)
-	{
-		abs_max_value[d] = abs(observedValue[0][d]);
-		abs_min_value[d] = abs(observedValue[0][d]);
-	}
-	for (i = 1; i < Num_Crafts*Num_obserPosit; i++)
-	{
-		for (d = 0; d < Dim; d++)
-		{
-			if (abs(observedValue[i][d]) < abs_min_value[d])
-				abs_min_value[d] = abs(observedValue[i][d]);
-			if (abs(observedValue[i][d]) > abs_max_value[d])
-				abs_max_value[d] = abs(observedValue[i][d]);
-		}
-	}
-	ofstream dataout("observeddata.dat");							// write position and magnetic filed value
-//	dataout << "data generating from c++ program not really from observation" << endl;
-//	dataout << "Position,     observerdValue" << endl;
-	write(Position, Num_Crafts*Num_obserPosit, dataout);
-	write(observedValue, Num_Crafts*Num_obserPosit, dataout);
-	dataout.close();
+			magisland(observedValue[i], Position[i]);				// magnetic island configuration
+	
+	
 /****** recycle dynacim memory and stop the program	****************************************/
 	delete[] CraftLeap;
 	delete[] CraftsInterval;
@@ -133,12 +87,27 @@ int read(Point* Position, double observedValue[][Dim], double* max_posit,
 	delete[] starting_posit;
 	return Num_Crafts*Num_obserPosit;
 }
-void CoordinatesTransform(double observedValue[][Dim], double CraftsInterval[][Dim],
-	int *Num_Crafts, double CraftLeap[][Dim], int *Num_obserPosit, ifstream& filename)
+int read(Point* Position, double observedValue[][Dim], ifstream& datain)
 {
-/******	a lot to do ******/
-	*Num_Crafts = GroupNumber;
-	*Num_obserPosit = M;
+/******	simply read from datain the position of craft and observed magnetic field value	******/
+	double x, y, z;
+	double valuex, valuey, valuez;
+	char ch;
+	int i, num;
+	for (i = 0; i < max_length; i++)
+	{
+		datain.get(ch);
+		if (!ch)
+			break;
+		else
+		{
+			datain >> x >> y >> z >> valuex >> valuey >> valuez;
+			num = i + 1;
+		}
+	}
+	M = num;							// every craft's observed position's number
+	GroupNumber = 4;					// craft's number
+	return GroupNumber*M;
 }
 double tanhtofit(Point& var)
 {
@@ -152,54 +121,163 @@ void magisland(double* value, Point& var)
 	double oldx, oldy, oldz;							// old coordinates
 	double Bx, By, Bz;
 	double delta_psi = island_Magnit;					// delta_psi = island_Magnit*cos(kx*x)*cos(ky*y)
-	double kx = 2 * 3.141592653589793 / (3 * Length_Scale);
-	double ky = 3.141592653589793 / (3 * Length_Scale);
-	if (Dim > 1)
+	double kx = Pi / (3 * Length_Scale);
+	double ky = 2 * Pi / (3 * Length_Scale);
+	double kz = 2 * Pi / (3 * Length_Scale);
+	if (Dim > 1)	// By is guide field
 	{
-		x = var.getx(); y = var.gety();
 /****** rotate x-y to older coordinates ******/
-		oldx = x * cos(degreez) - y * sin(degreez);
-		oldy = x * sin(degreez) + y * cos(degreez);
-/****** rotate oldy-z to older coordinates in 3D	******/	
+		x = var.getx(); y = var.gety();
+		oldx = x * cos(degreez) + y * sin(degreez);
+		oldy = -x * sin(degreez) + y * cos(degreez);
 		if (Dim > 2)
 		{
+/****** rotate oldx-z to older coordinates in 3D	******/
 			z = var.getz();
-			oldz = oldy * sin(degreex) + z * cos(degreex);
-			oldy = oldy * cos(degreex) - z * sin(degreex);
+			oldz = oldx * sin(degreey) + z * cos(degreey);
+			oldx = oldx * cos(degreey) - z * sin(degreey);
 		}
-/****** compute magnetic field value in oldx-lody-oldz	******/			
-		Bx = tanh(oldy / Length_Scale);
-		Bx += -ky*delta_psi*cos(kx*oldx)*sin(ky*oldy);
-		By = kx*delta_psi*sin(kx*oldx)*cos(ky*oldy);
-		if (Dim > 2)
-			Bz = 0.5;			
-/******* rotate vector from oldy-oldz to oldy-z	******/
-		if (Dim > 2)
+/****** compute magnetic field value in oldx-lody-oldz	******/	
+		By = tanh(oldx / Length_Scale);			// B\vec = e\hat_z \times \nabla\psi
+		Bx = ky*delta_psi*cos(kx*oldx)*sin(ky*oldy);
+		By += -kx*delta_psi*sin(kx*oldx)*cos(ky*oldy);
+		value[0] = Bx;
+		if (Dim > 2)			//  y component is guide field
 		{
-			value[1] = By * cos(degreex) + Bz * sin(degreex);
-			value[2] = -By * sin(degreex) + Bz * cos(degreex);
+			Bz = tanh(oldx / Length_Scale);
+			Bx =   kz*delta_psi*cos(kx*oldx)*sin(kz*oldz);
+			Bz += -kx*delta_psi*sin(kx*oldx)*cos(kz*oldz);
+			By = 0.5;
+/******* rotate vector from oldx-oldz to oldx-z	******/
+			value[0] = Bx * cos(degreey) + Bz * sin(degreey);
+			value[2] = -Bx * sin(degreey) + Bz * cos(degreey);
 		}
-		else
-			value[1] = By;
-/******* rotate vector from x-oldy to x-y	******/
-		value[0] = Bx * cos(degreez) + value[1] * sin(degreez);
-		value[1] = Bx * (-sin(degreez)) + value[1] * cos(degreez);
+/******* rotate vector from oldx-oldy to x-y	******/
+		value[1] = value[0] * sin(degreez) + By * cos(degreez);
+		value[0] = value[0] * cos(degreez) - By * sin(degreez);
 	}	
 }
-void RBF_initial(double* value, Point& var, Point* Node, Point* DistParam)
+void ModelField(int num, Point* Node, Point* DistParam, Point* Position, double Value[][Dim])
+{
+	int i;
+	if (model == SEPARATORMODEL)
+		SeparatorField(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
+	else if (model == RBFMODEL)
+		RBFModelField(num, Node, DistParam, Position, Value);	// use Separator Model to model a magnetic field
+	else if (model == CURRENTSHEET)
+	{
+		if (Dim == 1)
+			for (i = 0; i < num; i++)
+				Value[i][0] = tanhtofit(Position[i]);			// f(x,y,z) to be fitted, specified manually
+		if (Dim > 1)
+			for (i = 0; i < num; i++)
+				magisland(Value[i], Position[i]);				// magnetic island configuration
+	}
+	else
+		cout << "You should read data from real observation file, do you really do that?" << endl;
+}
+void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, double observedValue[][Dim])
 {
 	BasicFunction *Chi = new BasicFunction[N]();
 	oncefit fitting;
 	double* Alpha = new double[N_Alpha]();
-	int i;
+	int i, j;
 	for (i = 0; i < N; i++)
 		Chi[i].specify(Node[i], DistParam[i]);
 	for (i = 0; i < N_Alpha; i++)
-		Alpha[i] = i+10;
+		Alpha[i] = i + 10;
+//	Alpha[0] = 15;
+//	Alpha[3] = -7;
+//	Alpha[5] = 23;
 	fitting.assignParameter(Alpha);
-	fitting.getValue(value, var, Chi);
+	for (i = 0; i < num; i++)
+		fitting.getValue(observedValue[i], Position[i], Chi);
 	delete[] Alpha;
 	delete[] Chi;
 }
-
-
+void SeparatorField(int num, Point* Position, double Value[][Dim])
+{
+/******	use Separator Model to model a magnetic field, please refer to Pontin[2011], Advances in Space Research	******/
+	 double Bx, By, Bz;
+	 double x, y, z;
+	 int i, j;
+	 
+	 for (i = 0; i < num; i++)
+	 {
+		 x = Position[i].getx();
+		 y = Position[i].gety();
+		 z = Position[i].getz();
+		 Bx = Bmagnit * (x * (y - 3 * Null_Posit)
+			 + Currenct_along_Separator * (-40 * z * exp(-20 * (x*x + z*z))));
+		 By = Bmagnit * (Null_Posit * Null_Posit - y * y + 0.5 * (x * x + z * z));
+		 Bz = Bmagnit * (z * (y + 3 * Null_Posit)
+			 + Currenct_along_Separator * (40 * x * exp(-20 * (x*x + z*z))));
+		 Value[i][0] = Bx;
+		 Value[i][1] = By;
+		 Value[i][2] = Bz;
+	 }
+	 write_script_tecplot();
+}
+void write_script_tecplot()
+{
+/******	create 5 circle geometries which are the origin of streamtrace to be plotted in tecplot	******/
+	int nn = 7;							// 7 points
+	double rr = 0.1 * Null_Posit;
+	double* theta = new double[nn];
+	double tmptheta;
+	double x, y, z;
+	int i, j;
+	for (i = 0; i < nn; i++)
+		theta[i] = 2. * Pi / nn * (0.5 + i);
+	ofstream fileID("streamtrace_circle_geometry_for3D.mcr");
+	fileID << "#!MC 1410" << endl;
+	fileID << "$!VarSet |MFBD| = 'C:\\Program Files\\Tecplot\\Tecplot 360 EX 2016 R1' " << endl;
+	default_random_engine generator(time(NULL));
+	uniform_real_distribution<double> distribution(0., 0.5*(theta[1]-theta[0]));		// mean value is 0.25; can be modified
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C1 circle
+	{
+		x = rr * cos(theta[i] + tmptheta);
+		z = rr * sin(theta[i] + tmptheta);
+		y = 0;
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=0. Z=" << z << "}" << endl;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C2 circle
+	{
+		x = -.5;
+		z = 0 + rr * cos(theta[i] + tmptheta);
+		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C3 circle
+	{
+		x = .5;
+		z = 0 + rr * cos(theta[i] + tmptheta);
+		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C4 circle
+	{
+		z = -.5;
+		x = 0 + rr * cos(theta[i] + tmptheta);
+		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
+	}
+	tmptheta = distribution(generator);
+	for (i = 0; i < nn; i++)			// C5 circle
+	{
+		z = .5;
+		x = 0 + rr * cos(theta[i] + tmptheta);
+		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
+	}
+	fileID << "$!RemoveVar |MFBD|";
+}

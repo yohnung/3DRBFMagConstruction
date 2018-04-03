@@ -33,6 +33,12 @@ int read(Point* Position, double observedValue[][Dim])
 	CraftsInterval[0][0] = Interval12x;								// Interval[0] means distance vector between 1st and 2nd
 	CraftsInterval[1][0] = Interval13x;								// Interval[1] for 1st and 3rd
 	CraftsInterval[2][0] = Interval14x;								// Interval[2] for 1st and 4th
+	CraftsInterval[3][0] = Interval15x;								// Interval[3] for 1st and 5th
+	CraftsInterval[4][0] = Interval16x;								// Interval[4] for 1st and 6th
+	CraftsInterval[5][0] = Interval17x;								// Interval[5] for 1st and 7th
+	CraftsInterval[6][0] = Interval18x;								// Interval[6] for 1st and 8th
+	CraftsInterval[7][0] = Interval19x;								// Interval[7] for 1st and 9th
+
 	if (Dim > 1)
 	{
 		starting_posit[1] = starty;
@@ -40,6 +46,11 @@ int read(Point* Position, double observedValue[][Dim])
 		CraftsInterval[0][1] = Interval12y;
 		CraftsInterval[1][1] = Interval13y;
 		CraftsInterval[2][1] = Interval14y;
+		CraftsInterval[3][1] = Interval15y;
+		CraftsInterval[4][1] = Interval16y;
+		CraftsInterval[5][1] = Interval17y;
+		CraftsInterval[6][1] = Interval18y;
+		CraftsInterval[7][1] = Interval19y;
 	}
 	if (Dim > 2)
 	{
@@ -48,14 +59,16 @@ int read(Point* Position, double observedValue[][Dim])
 		CraftsInterval[0][2] = Interval12z;
 		CraftsInterval[1][2] = Interval13z;
 		CraftsInterval[2][2] = Interval14z;
+		CraftsInterval[3][2] = Interval15z;
+		CraftsInterval[4][2] = Interval16z;
+		CraftsInterval[5][2] = Interval17z;
+		CraftsInterval[6][2] = Interval18z;
+		CraftsInterval[7][2] = Interval19z;
+
 	}
 	Position[0].specify(flying_posit);
 	default_random_engine generator(time(NULL));
 	uniform_real_distribution<double> distribution(0.1, 0.3);		// mean value is 0.25; can be modified
-/******	flying a space-craft, generating position as	******/
-/******			**3		******/
-/******		**4		2** ******/
-/******			**1		******/
 	for (g = 0; g < Num_Crafts; g++)								// g for different craft
 	{
 		if (g > 0)													// set for 2nd and 3rd craft

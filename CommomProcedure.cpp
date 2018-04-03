@@ -222,13 +222,13 @@ void constructNodesWeb(double* max_posit, double* min_posit, Point* Node, Point*
 		meanDelta[2].assignz(meandist[2]);
 		DistParam[0].assignz(meandist[2]);
 	}
-	Node[0] = min_Position - 0.2 * (max_Position - min_Position);
 /******* Specify DistParam, usually 3 times Node's distance which means 3 * 1.4 in dimensionless case	******/
 	double* temptemp = new double[2]();				// DistParam[0] = stretchParam * DistParam[0];
 	temptemp[0] = 4.2;								// DistParam[0] = stretchParam * DistParam[0];
 	DistParam[0].specify(temptemp);					// DistParam[0] = stretchParam * DistParam[0];
 	delete[] temptemp;
 /******* construct the web of Nodes		**********************************************************************/
+	Node[0] = min_Position - 0.2 * (max_Position - min_Position);
 	for (i = 1; i < Nx; i++)
 	{
 		if (Dim > 1)
@@ -1072,22 +1072,73 @@ void write_satellite_position(Point* Position)
 {
 /******	write out the satellite's position evolving with time	******/
 	int Num_obserPosit = M;
-	int i, j;
+	int i, j, k;
+	int numelement;
+	char zonetype[20];
 	ofstream fileout("statellite_position_over_time.dat");
 	fileout << "title = \"Satellite's position varing with time\"" << endl;
 	fileout << "variables = \"x\", \"y\", \"z\"" << endl;
+	if (GroupNumber == 4)					// make it a quadilateral
+	{
+		numelement = 1;
+		strcpy(zonetype, "fequadrilateral");
+	}
+	else if (GroupNumber == 5)				// make it four triangles
+	{
+		numelement = 4;
+		strcpy(zonetype, "fetriangle");
+	}
+	else if (GroupNumber == 9)				// make it four quadilaterals
+	{
+		numelement = 4;
+		strcpy(zonetype, "fequadrilateral");
+	}
+	else
+		cout << "Caution! You need to check the number of space-crafts";
+
 	for (i = 0; i < Num_obserPosit; i++)
 	{
-		fileout << "zone nodes = 4, elements=1, datapacking=point, zonetype=fetetrahedron" << endl;
+		fileout << "zone nodes = " << GroupNumber;
+		fileout << ", elements = " << setw(2) << numelement;
+		fileout << ", datapacking = block, zonetype = " << zonetype << endl;
 		fileout << "  strandid = 1, solutiontime = " << i << endl;
-		fileout << Position[i].getx() << " " << Position[i].gety() << " " << Position[i].getz() << endl;
-		j = Num_obserPosit + i;
-		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
-		j = 2*Num_obserPosit + i;
-		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
-		j = 3*Num_obserPosit + i;
-		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
-		fileout << "1 2 3 4" << endl;
+		for (j = 0; j < GroupNumber; j++)
+		{
+			k = j*Num_obserPosit + i;
+			fileout << " " << Position[k].getx();	
+		}
+		fileout << endl;
+		for (j = 0; j < GroupNumber; j++)
+		{
+			k = j*Num_obserPosit + i;
+			fileout << " " << Position[k].gety();
+		}
+		fileout << endl;
+		for (j = 0; j < GroupNumber; j++)
+		{
+			k = j*Num_obserPosit + i;
+			fileout << " " << Position[k].getz();
+		}
+		fileout << endl;
+
+		if (GroupNumber == 4)					// make it a quadilateral
+			fileout << "1 2 3 4";
+		else if (GroupNumber == 5)				// make it four triangles
+		{
+			fileout << "1 2 5" << endl;
+			fileout << "5 2 3" << endl;
+			fileout << "5 3 4" << endl;
+			fileout << "5 4 1" << endl;
+		}
+		else if (GroupNumber == 9)				// make it four quadilaterals
+		{
+			fileout << "1 6 5 9" << endl;
+			fileout << "6 2 7 5" << endl;
+			fileout << "5 7 3 8" << endl;
+			fileout << "9 5 8 4" << endl;
+		}
+		else
+			cout << "Caution! You need to check the number of space-crafts";
 	}
 	;
 }

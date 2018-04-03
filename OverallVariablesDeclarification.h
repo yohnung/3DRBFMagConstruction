@@ -7,12 +7,27 @@ extern double startz;	// starting position's z component
 extern double Interval12x;		// x distance between 1st and 2nd spacecraft
 extern double Interval12y;		// y distance between 1st and 2nd spacecraft
 extern double Interval12z;		// z distance between 1st and 2nd spacecraft
-extern double Interval13x;		// x distance between 2nd and 3rd spacecraft
-extern double Interval13y;		// y distance between 2nd and 3rd spacecraft
-extern double Interval13z;		// z distance between 2nd and 3rd spacecraft
-extern double Interval14x;		// x distance between 1st and 2nd spacecraft
-extern double Interval14y;		// y distance between 1st and 2nd spacecraft
-extern double Interval14z;		// z distance between 1st and 2nd spacecraft
+extern double Interval13x;		// x distance between 1st and 3rd spacecraft
+extern double Interval13y;		// y distance between 1st and 3rd spacecraft
+extern double Interval13z;		// z distance between 1st and 3rd spacecraft
+extern double Interval14x;		// x distance between 1st and 4th spacecraft
+extern double Interval14y;		// y distance between 1st and 4th spacecraft
+extern double Interval14z;		// z distance between 1st and 4th spacecraft
+extern double Interval15x;		// x distance between 1st and 5th spacecraft
+extern double Interval15y;		// y distance between 1st and 5th spacecraft
+extern double Interval15z;		// z distance between 1st and 5th spacecraft
+extern double Interval16x;		// x distance between 1st and 6th spacecraft
+extern double Interval16y;		// y distance between 1st and 6th spacecraft
+extern double Interval16z;		// z distance between 1st and 6th spacecraft
+extern double Interval17x;		// x distance between 1st and 7th spacecraft
+extern double Interval17y;		// y distance between 1st and 7th spacecraft
+extern double Interval17z;		// z distance between 1st and 7th spacecraft
+extern double Interval18x;		// x distance between 1st and 8th spacecraft
+extern double Interval18y;		// y distance between 1st and 8th spacecraft
+extern double Interval18z;		// z distance between 1st and 8th spacecraft
+extern double Interval19x;		// x distance between 1st and 9th spacecraft
+extern double Interval19y;		// y distance between 1st and 9th spacecraft
+extern double Interval19z;		// z distance between 1st and 9th spacecraft
 extern double Leapx;			// x distance of a flying craft between adjacent time
 extern double Leapy; 			// y distance of a flying craft between adjacent time
 extern double Leapz;			// z distance of a flying craft between adjacent time

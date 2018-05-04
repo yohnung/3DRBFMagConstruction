@@ -197,11 +197,11 @@ void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, doub
 	int i, j;
 	for (i = 0; i < N; i++)
 		Chi[i].specify(Node[i], DistParam[i]);
-	for (i = 0; i < N_Alpha; i++)
-		Alpha[i] = i + 10;
-//	Alpha[0] = 15;
-//	Alpha[3] = -7;
-//	Alpha[5] = 23;
+//	for (i = 0; i < N_Alpha; i++)
+//		Alpha[i] = i + 10;
+	Alpha[0] = 15;
+	Alpha[3] = -7;
+	Alpha[5] = 23;
 	fitting.assignParameter(Alpha);
 	for (i = 0; i < num; i++)
 		fitting.getValue(observedValue[i], Position[i], Chi);
@@ -220,11 +220,13 @@ void SeparatorField(int num, Point* Position, double Value[][Dim])
 		 x = Position[i].getx();
 		 y = Position[i].gety();
 		 z = Position[i].getz();
+
+		 y = y - Null_OffsetY;			// This is means that magneti-null is located at (Null_OffsetY +/- Null_Posit)
 		 Bx = Bmagnit * (x * (y - 3 * Null_Posit)
-			 + Currenct_along_Separator * (-40 * z * exp(-20 * (x*x + z*z))));
+			 + Current_along_Separator * (-20 * z * exp(-10 * (x*x + z*z)))); //(-40 * z * exp(-20 * (x*x + z*z))))
 		 By = Bmagnit * (Null_Posit * Null_Posit - y * y + 0.5 * (x * x + z * z));
 		 Bz = Bmagnit * (z * (y + 3 * Null_Posit)
-			 + Currenct_along_Separator * (40 * x * exp(-20 * (x*x + z*z))));
+			 + Current_along_Separator * (20 * x * exp(-10 * (x*x + z*z))));
 		 Value[i][0] = Bx;
 		 Value[i][1] = By;
 		 Value[i][2] = Bz;
@@ -252,7 +254,7 @@ void write_script_tecplot()
 	{
 		x = rr * cos(theta[i] + tmptheta);
 		z = rr * sin(theta[i] + tmptheta);
-		y = 0;
+		y = Null_OffsetY;
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=0. Z=" << z << "}" << endl;
 	}
@@ -261,7 +263,7 @@ void write_script_tecplot()
 	{
 		x = -.5;
 		z = 0 + rr * cos(theta[i] + tmptheta);
-		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY-Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;;
 	}
@@ -270,7 +272,7 @@ void write_script_tecplot()
 	{
 		x = .5;
 		z = 0 + rr * cos(theta[i] + tmptheta);
-		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY-Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}
@@ -279,7 +281,7 @@ void write_script_tecplot()
 	{
 		z = -.5;
 		x = 0 + rr * cos(theta[i] + tmptheta);
-		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY+Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}
@@ -288,7 +290,7 @@ void write_script_tecplot()
 	{
 		z = .5;
 		x = 0 + rr * cos(theta[i] + tmptheta);
-		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY+Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}

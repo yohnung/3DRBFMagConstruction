@@ -36,8 +36,9 @@ extern double island_Magnit;	// related to 'island Magnetic Field's island width
 extern double degreez;			// 45 degree rotate coordinates of z-axis
 extern double degreey;			// 10 degree rotate corrdinate of x-axis#pragma once
 extern double Bmagnit;					// magnitude of magnetic field
-extern double Currenct_along_Separator;	// current flow along separator line
+extern double Current_along_Separator;	// current flow along separator line
 extern double Null_Posit;				// null's positions, corresponding to +/- value
+extern double Null_OffsetY;
 /******	choose what model you want use	******/
 extern char   model;			// SEPARATORMODEL for separator model; RBFMODEL for RBF-model; DEFAULT for no model
 /******	Parameter used in solver	******************************/

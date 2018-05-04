@@ -62,7 +62,7 @@ int main()
 	double* abs_min_value = new double[Dim]();								// minimum observed value
 	double* Alpha2 = new double[Dim]();										// second transformation degree
 	CrdTrf2MinVarDir(Number_obserPosit, Position, observedValue, Alpha2, 	// according to position and observe value to
-		Node, DistParam, TypicalLength, abs_max_value, abs_min_value);		// specify a min varing direction, make it z-direction and redifine Lx, Ly, Lz
+		Node, DistParam, TypicalLength, abs_max_value, abs_min_value);		// specify a min varing direction, make it y-direction and redifine Lx, Ly, Lz
 	//TypicalLength[0] = 0.4;// 0.4;	// manually assign value to typical length of Radial Basic Function
 	//if (Dim > 1)
 	//	TypicalLength[1] = 1;// 2;		// manually assign value to typical length of Radial Basic Function

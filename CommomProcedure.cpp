@@ -472,7 +472,7 @@ void CrdTrf2MinVarDir(int num, Point* Position, double observedValue[][Dim], dou
 	Point* Node, Point* DistParam, double* TypicalLength, double* abs_max_value, double* abs_min_value)
 {
 /******	According to position and observe value to find a min varing direction,			*******/
-/******	then specify degree Alpha, to make it y-directionand. Thus transform 'position',*******/
+/******	then specify degree Alpha, to make it y-direction. Thus transform 'position',*******/
 /******	'observed value', 'node', 'distparam', and find absolute maximum observed value.*******/
 /******	Finally transform 'typical length' to new coordinates									*******/
 	double min_vary_direc[Dim];		// minimum varing direction
@@ -964,7 +964,7 @@ void write_tecplot(Point* Grid, double Value[][Dim], int num, ofstream& filename
 			Bx = Value[i][0];
 			By = Value[i][1];
 			Bz = Value[i][2];
-			ScalarB = sqrt(Bx * Bx + By * By);
+			ScalarB = sqrt(Bx * Bx + By * By + Bz * Bz);
 			filename << Bx << " ";
 			filename << By << " ";
 			filename << Bz << " ";
@@ -1075,13 +1075,13 @@ void write_satellite_position(Point* Position)
 	int i, j, k;
 	int numelement;
 	char zonetype[20];
-	ofstream fileout("statellite_position_over_time.dat");
+	ofstream fileout("satellite_position_over_time.dat");
 	fileout << "title = \"Satellite's position varing with time\"" << endl;
 	fileout << "variables = \"x\", \"y\", \"z\"" << endl;
-	if (GroupNumber == 4)					// make it a quadilateral
+	if (GroupNumber == 4)					// make it a tetrahedron
 	{
 		numelement = 1;
-		strcpy(zonetype, "fequadrilateral");
+		strcpy(zonetype, "fetetrahedron");
 	}
 	else if (GroupNumber == 5)				// make it four triangles
 	{

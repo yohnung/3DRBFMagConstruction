@@ -223,7 +223,7 @@ void constructNodesWeb(double* max_posit, double* min_posit, Point* Node, Point*
 		DistParam[0].assignz(meandist[2]);
 	}
 /******* Specify DistParam, usually 3 times Node's distance which means 3 * 1.4 in dimensionless case	******/
-	double* temptemp = new double[2]();				// DistParam[0] = stretchParam * DistParam[0];
+	double* temptemp = new double[3]();				// DistParam[0] = stretchParam * DistParam[0];
 	temptemp[0] = 4.2;								// DistParam[0] = stretchParam * DistParam[0];
 	DistParam[0].specify(temptemp);					// DistParam[0] = stretchParam * DistParam[0];
 	delete[] temptemp;

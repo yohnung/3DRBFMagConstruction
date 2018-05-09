@@ -103,20 +103,36 @@ int read(Point* Position, double observedValue[][Dim])
 int read(Point* Position, double observedValue[][Dim], ifstream& datain)
 {
 /******	simply read from datain the position of craft and observed magnetic field value	******/
-	double x, y, z;
+	int Num_obserPosit = M;
+	double x[3];
 	double valuex, valuey, valuez;
-	char ch;
-	int i, num;
-	for (i = 0; i < max_length; i++)
+	double Hour, Minute, Second, tmp;
+	int num;
+	num = 0;
+	while (datain.good())
 	{
-		datain.get(ch);
-		if (!ch)
-			break;
-		else
-		{
-			datain >> x >> y >> z >> valuex >> valuey >> valuez;
-			num = i + 1;
-		}
+		datain >> Hour >> Minute >> Second;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[num].specify(x); 
+		observedValue[num][0] = valuex; 
+		observedValue[num][1] = valuey; 
+		observedValue[num][2] = valuez;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[Num_obserPosit + num].specify(x); 
+		observedValue[Num_obserPosit + num][0] = valuex; 
+		observedValue[Num_obserPosit + num][1] = valuey; 
+		observedValue[Num_obserPosit + num][2] = valuez;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[2 * Num_obserPosit + num].specify(x);
+		observedValue[2 * Num_obserPosit + num][0] = valuex;
+		observedValue[2 * Num_obserPosit + num][1] = valuey;
+		observedValue[2 * Num_obserPosit + num][2] = valuez;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[3 * Num_obserPosit + num].specify(x);
+		observedValue[3 * Num_obserPosit + num][0] = valuex;
+		observedValue[3 * Num_obserPosit + num][1] = valuey;
+		observedValue[3 * Num_obserPosit + num][2] = valuez;
+		num = num + 1;
 	}
 	M = num;							// every craft's observed position's number
 	GroupNumber = 4;					// craft's number
@@ -223,10 +239,10 @@ void SeparatorField(int num, Point* Position, double Value[][Dim])
 
 		 y = y - Null_OffsetY;			// This is means that magneti-null is located at (Null_OffsetY +/- Null_Posit)
 		 Bx = Bmagnit * (x * (y - 3 * Null_Posit)
-			 + Current_along_Separator * (-20 * z * exp(-10 * (x*x + z*z)))); //(-40 * z * exp(-20 * (x*x + z*z))))
+			 + 0.5 * Current_along_Separator * (-z * exp(-(x*x + z*z) / ( 2 * Cur_Width * Cur_Width)))); 
 		 By = Bmagnit * (Null_Posit * Null_Posit - y * y + 0.5 * (x * x + z * z));
 		 Bz = Bmagnit * (z * (y + 3 * Null_Posit)
-			 + Current_along_Separator * (20 * x * exp(-10 * (x*x + z*z))));
+			 + 0.5 * Current_along_Separator * ( x * exp(-(x*x + z*z) / ( 2 * Cur_Width * Cur_Width))));
 		 Value[i][0] = Bx;
 		 Value[i][1] = By;
 		 Value[i][2] = Bz;
@@ -256,7 +272,7 @@ void write_script_tecplot()
 		z = rr * sin(theta[i] + tmptheta);
 		y = Null_OffsetY;
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
-		fileID << "  STARTPOS{X=" << x << " Y=0. Z=" << z << "}" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}
 	tmptheta = distribution(generator);
 	for (i = 0; i < nn; i++)			// C2 circle

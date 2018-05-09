@@ -39,6 +39,7 @@ extern double Bmagnit;					// magnitude of magnetic field
 extern double Current_along_Separator;	// current flow along separator line
 extern double Null_Posit;				// null's positions, corresponding to +/- value
 extern double Null_OffsetY;
+extern double Cur_Width;
 /******	choose what model you want use	******/
 extern char   model;			// SEPARATORMODEL for separator model; RBFMODEL for RBF-model; DEFAULT for no model
 /******	Parameter used in solver	******************************/

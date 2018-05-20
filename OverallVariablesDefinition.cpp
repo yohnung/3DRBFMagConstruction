@@ -1,6 +1,6 @@
 #include "MacroAndMostUsedLibrary.h"
 /******	related to space craft, when read observed value form real craft data file, these are useless	******/
-double M = 41;				// number of flying position, useless when read from file
+double M = 21;				// number of flying position, useless when read from file
 /******	flying 5 space-crafts, generating position as	******/
 /******			        **3 					******/
 /******			    **8		**7					******/
@@ -38,7 +38,7 @@ double Interval19y = 0;		// y distance between 1st and 9th spacecraft
 double Interval19z = 0.25;	// z distance between 1st and 9th spacecraft
 
 double Leapx = 0;			// x distance of a flying craft between adjacent time
-double Leapy = .1;			// y distance of a flying craft between adjacent time
+double Leapy = .2;			// y distance of a flying craft between adjacent time 
 double Leapz = 0;			// z distance of a flying craft between adjacent time
 /******	model the magnetic field value, useless when read from file	******/
 double Length_Scale = 3.;				// preset Model 'island Magnetic Field's typical length used in tanh(x/Length_Scale)
@@ -47,12 +47,13 @@ double degreez = Pi * 10/ 180;			// 10 degree rotate coordinates of z-axis
 double degreey = Pi / 4;				// 45 degree rotate corrdinate of x-axis
 /******	model the magnetic field value using 'Separator model'	******/
 double Bmagnit = 1;						// magnitude of magnetic field
-double Current_along_Separator = 0.5;	// current flow along separator line
+double Current_along_Separator = 6.2;	// current flow along separator line
 double Null_Posit = 1;					// null's positions, corresponding to +/- value
 double Null_OffsetY = -4;
+double Cur_Width = 1.0;
 /******	choose what model you want use	******/
 char   model = SEPARATORMODEL;			// SEPARATORMODEL for separator model; RBFMODEL for RBF-model; DEFAULT for no model
 /******	Parameter used in solver	******************************/
-double cutoff = 1e8;		// When we solve the problem using SVD, omit singular value using this parameter
+double cutoff = 1.5e5;		// When we solve the problem using SVD, omit singular value using this parameter
 double tolerance = 0.5;		// when B is lower than tolerance*max_value, the related equation will be wholely divided by B 
 

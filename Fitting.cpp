@@ -84,6 +84,9 @@ int main()
 	double (*A)[N_Alpha] = new double[Dim * Number_obserPosit][N_Alpha]();	// define Matrix A, later in used in solving A* alpha = Y
 	double* Y = new double[Dim * Number_obserPosit]();						// observed value
 	specifyAY(A, Y, observedValue, Position, Number_obserPosit, Chi);		// specify A and Y using RBF and observed value
+	ofstream TransformMatrixOut("TransfromMatrix.dat");
+	write(A, Dim*Number_obserPosit, TransformMatrixOut);
+	TransformMatrixOut.close();
 	double acond = 1;														// condition numver of A^T * A
 	acond = LinearLUSolver(Alpha, A, Y, Number_obserPosit);					// LU solving A * alpha = Y
 	LinearQRSolver(Alpha, A, Y, Number_obserPosit, abs_max_value);

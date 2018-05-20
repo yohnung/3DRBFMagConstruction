@@ -719,7 +719,8 @@ double LinearLUSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_
 	LAPACKE_dgecon(LAPACK_ROW_MAJOR, 'I', N_Alpha, re_a, N_Alpha, anorm_infty, &acond);			// estimate the condition number of A
 	LAPACKE_dgetrs(LAPACK_ROW_MAJOR, 'N', N_Alpha, 1, re_a, N_Alpha, ipiv, tempAlpha, 1);		// Using LU factored Matrix to solve A * alpha = B, overwrite B
 	ofstream MatrixOut("Condition Number and SqaureMatrix.dat");
-	write(&acond, reA, MatrixOut);
+	MatrixOut << acond << endl;
+	write(reA, N_Alpha, MatrixOut);
 	MatrixOut.close();
 	ofstream LUout("LU_Alpha.dat");
 	write(tempAlpha, N_Alpha, LUout);
@@ -828,6 +829,18 @@ void LinearSVDSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_o
 	delete[] a;
 	delete[] tempAlpha;
 }
+void write(double A[][N_Alpha], int num, ofstream& filename)
+{
+/****** write out matrix with 'num' rows ******/
+	int i, j;
+	filename << setiosflags(ios::scientific) << setprecision(15);
+	for (i = 0; i < num; i++)
+	{
+		for (j = 0; j < N_Alpha; j++)
+			filename << setw(25) << A[i][j] << " ";
+		filename << endl;
+	}
+}
 void write(Point* posit, int num, ofstream& filename)
 {
 /******	write out observation positions	******/
@@ -884,21 +897,6 @@ void write(double* alpha_singularvalue, int num, ofstream& filename)
 	{
 		for (i = 0; i < num / n; i++)
 			filename << setw(25) << alpha_singularvalue[i * n + 1] << " ";
-		filename << endl;
-	}
-}
-void write(double* rcond, double Matrix[][N_Alpha], ofstream& filename)
-{
-/******	write out Matrix and its condition number	******/
-	int i, j;
-	filename << setiosflags(ios::scientific) << setprecision(15);
-	filename << *rcond << endl;
-	for (i = 0; i < N_Alpha; i++)
-	{
-		for (j = 0; j < N_Alpha; j++)
-		{
-			filename << setw(25) << Matrix[i][j] << " ";
-		}
 		filename << endl;
 	}
 }

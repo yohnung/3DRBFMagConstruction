@@ -33,6 +33,12 @@ int read(Point* Position, double observedValue[][Dim])
 	CraftsInterval[0][0] = Interval12x;								// Interval[0] means distance vector between 1st and 2nd
 	CraftsInterval[1][0] = Interval13x;								// Interval[1] for 1st and 3rd
 	CraftsInterval[2][0] = Interval14x;								// Interval[2] for 1st and 4th
+	CraftsInterval[3][0] = Interval15x;								// Interval[3] for 1st and 5th
+	CraftsInterval[4][0] = Interval16x;								// Interval[4] for 1st and 6th
+	CraftsInterval[5][0] = Interval17x;								// Interval[5] for 1st and 7th
+	CraftsInterval[6][0] = Interval18x;								// Interval[6] for 1st and 8th
+	CraftsInterval[7][0] = Interval19x;								// Interval[7] for 1st and 9th
+
 	if (Dim > 1)
 	{
 		starting_posit[1] = starty;
@@ -40,6 +46,11 @@ int read(Point* Position, double observedValue[][Dim])
 		CraftsInterval[0][1] = Interval12y;
 		CraftsInterval[1][1] = Interval13y;
 		CraftsInterval[2][1] = Interval14y;
+		CraftsInterval[3][1] = Interval15y;
+		CraftsInterval[4][1] = Interval16y;
+		CraftsInterval[5][1] = Interval17y;
+		CraftsInterval[6][1] = Interval18y;
+		CraftsInterval[7][1] = Interval19y;
 	}
 	if (Dim > 2)
 	{
@@ -48,14 +59,16 @@ int read(Point* Position, double observedValue[][Dim])
 		CraftsInterval[0][2] = Interval12z;
 		CraftsInterval[1][2] = Interval13z;
 		CraftsInterval[2][2] = Interval14z;
+		CraftsInterval[3][2] = Interval15z;
+		CraftsInterval[4][2] = Interval16z;
+		CraftsInterval[5][2] = Interval17z;
+		CraftsInterval[6][2] = Interval18z;
+		CraftsInterval[7][2] = Interval19z;
+
 	}
 	Position[0].specify(flying_posit);
 	default_random_engine generator(time(NULL));
 	uniform_real_distribution<double> distribution(0.1, 0.3);		// mean value is 0.25; can be modified
-/******	flying a space-craft, generating position as	******/
-/******			**3		******/
-/******		**4		2** ******/
-/******			**1		******/
 	for (g = 0; g < Num_Crafts; g++)								// g for different craft
 	{
 		if (g > 0)													// set for 2nd and 3rd craft
@@ -90,20 +103,36 @@ int read(Point* Position, double observedValue[][Dim])
 int read(Point* Position, double observedValue[][Dim], ifstream& datain)
 {
 /******	simply read from datain the position of craft and observed magnetic field value	******/
-	double x, y, z;
+	int Num_obserPosit = M;
+	double x[3];
 	double valuex, valuey, valuez;
-	char ch;
-	int i, num;
-	for (i = 0; i < max_length; i++)
+	double Hour, Minute, Second, tmp;
+	int num;
+	num = 0;
+	while (datain.good())
 	{
-		datain.get(ch);
-		if (!ch)
-			break;
-		else
-		{
-			datain >> x >> y >> z >> valuex >> valuey >> valuez;
-			num = i + 1;
-		}
+		datain >> Hour >> Minute >> Second;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[num].specify(x); 
+		observedValue[num][0] = valuex; 
+		observedValue[num][1] = valuey; 
+		observedValue[num][2] = valuez;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[Num_obserPosit + num].specify(x); 
+		observedValue[Num_obserPosit + num][0] = valuex; 
+		observedValue[Num_obserPosit + num][1] = valuey; 
+		observedValue[Num_obserPosit + num][2] = valuez;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[2 * Num_obserPosit + num].specify(x);
+		observedValue[2 * Num_obserPosit + num][0] = valuex;
+		observedValue[2 * Num_obserPosit + num][1] = valuey;
+		observedValue[2 * Num_obserPosit + num][2] = valuez;
+		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		Position[3 * Num_obserPosit + num].specify(x);
+		observedValue[3 * Num_obserPosit + num][0] = valuex;
+		observedValue[3 * Num_obserPosit + num][1] = valuey;
+		observedValue[3 * Num_obserPosit + num][2] = valuez;
+		num = num + 1;
 	}
 	M = num;							// every craft's observed position's number
 	GroupNumber = 4;					// craft's number
@@ -160,8 +189,10 @@ void magisland(double* value, Point& var)
 void ModelField(int num, Point* Node, Point* DistParam, Point* Position, double Value[][Dim])
 {
 	int i;
-	if (model == SEPARATORMODEL)
-		SeparatorField(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
+	if (model == SEPARATORMODEL1)
+		SeparatorField1(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
+	if (model == SEPARATORMODEL2)
+		SeparatorField2(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
 	else if (model == RBFMODEL)
 		RBFModelField(num, Node, DistParam, Position, Value);	// use Separator Model to model a magnetic field
 	else if (model == CURRENTSHEET)
@@ -184,18 +215,18 @@ void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, doub
 	int i, j;
 	for (i = 0; i < N; i++)
 		Chi[i].specify(Node[i], DistParam[i]);
-	for (i = 0; i < N_Alpha; i++)
-		Alpha[i] = i + 10;
-//	Alpha[0] = 15;
-//	Alpha[3] = -7;
-//	Alpha[5] = 23;
+//	for (i = 0; i < N_Alpha; i++)
+//		Alpha[i] = i + 10;
+	Alpha[0] = 15;
+	Alpha[3] = -7;
+	Alpha[5] = 23;
 	fitting.assignParameter(Alpha);
 	for (i = 0; i < num; i++)
 		fitting.getValue(observedValue[i], Position[i], Chi);
 	delete[] Alpha;
 	delete[] Chi;
 }
-void SeparatorField(int num, Point* Position, double Value[][Dim])
+void SeparatorField1(int num, Point* Position, double Value[][Dim])
 {
 /******	use Separator Model to model a magnetic field, please refer to Pontin[2011], Advances in Space Research	******/
 	 double Bx, By, Bz;
@@ -207,16 +238,43 @@ void SeparatorField(int num, Point* Position, double Value[][Dim])
 		 x = Position[i].getx();
 		 y = Position[i].gety();
 		 z = Position[i].getz();
+
+		 y = y - Null_OffsetY;			// This is means that magneti-null is located at (Null_OffsetY +/- Null_Posit)
 		 Bx = Bmagnit * (x * (y - 3 * Null_Posit)
-			 + Currenct_along_Separator * (-40 * z * exp(-20 * (x*x + z*z))));
+			 + 0.5 * Current_along_Separator * (-z * exp(-(x*x + z*z) / ( 2 * Cur_Width * Cur_Width)))); 
 		 By = Bmagnit * (Null_Posit * Null_Posit - y * y + 0.5 * (x * x + z * z));
 		 Bz = Bmagnit * (z * (y + 3 * Null_Posit)
-			 + Currenct_along_Separator * (40 * x * exp(-20 * (x*x + z*z))));
+			 + 0.5 * Current_along_Separator * ( x * exp(-(x*x + z*z) / ( 2 * Cur_Width * Cur_Width))));
 		 Value[i][0] = Bx;
 		 Value[i][1] = By;
 		 Value[i][2] = Bz;
 	 }
 	 write_script_tecplot();
+}
+void SeparatorField2(int num, Point* Position, double Value[][Dim])
+{
+	/******	use Separator Model to model a magnetic field, please refer to Pontin[2011], Advances in Space Research	******/
+	double Bx, By, Bz;
+	double x, y, z;
+	int i, j;
+
+	for (i = 0; i < num; i++)
+	{
+		x = Position[i].getx();
+		y = Position[i].gety();
+		z = Position[i].getz();
+
+		y = y - Null_OffsetY;			// This is means that magneti-null is located at (Null_OffsetY +/- Null_Posit)
+		Bx = Bmagnit * (2./3 * x*x*x * y + 2*x * (y * Null_Posit*Null_Posit - 1./3 * y*y*y)
+			+ 0.5 * Current_along_Separator * (-z * exp(-(x*x + z*z) / (2 * Cur_Width * Cur_Width))));
+		By = Bmagnit * ((x*x + z*z + 5./3 * Null_Posit*Null_Posit - 1./3* y*y) * (Null_Posit*Null_Posit - y*y) + 1./6 * (x*x*x*x + z*z*z*z));
+		Bz = Bmagnit * (2./3 * z*z*z * y + 2*z * (y * Null_Posit*Null_Posit - 1./3 * y*y*y)
+			+ 0.5 * Current_along_Separator * (x * exp(-(x*x + z*z) / (2 * Cur_Width * Cur_Width))));
+		Value[i][0] = Bx;
+		Value[i][1] = By;
+		Value[i][2] = Bz;
+	}
+	write_script_tecplot();
 }
 void write_script_tecplot()
 {
@@ -239,16 +297,16 @@ void write_script_tecplot()
 	{
 		x = rr * cos(theta[i] + tmptheta);
 		z = rr * sin(theta[i] + tmptheta);
-		y = 0;
+		y = Null_OffsetY;
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
-		fileID << "  STARTPOS{X=" << x << " Y=0. Z=" << z << "}" << endl;
+		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}
 	tmptheta = distribution(generator);
 	for (i = 0; i < nn; i++)			// C2 circle
 	{
 		x = -.5;
 		z = 0 + rr * cos(theta[i] + tmptheta);
-		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY-Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;;
 	}
@@ -257,7 +315,7 @@ void write_script_tecplot()
 	{
 		x = .5;
 		z = 0 + rr * cos(theta[i] + tmptheta);
-		y = -Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY-Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}
@@ -266,7 +324,7 @@ void write_script_tecplot()
 	{
 		z = -.5;
 		x = 0 + rr * cos(theta[i] + tmptheta);
-		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY+Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}
@@ -275,7 +333,7 @@ void write_script_tecplot()
 	{
 		z = .5;
 		x = 0 + rr * cos(theta[i] + tmptheta);
-		y = Null_Posit + rr * sin(theta[i] + tmptheta);
+		y = Null_OffsetY+Null_Posit + rr * sin(theta[i] + tmptheta);
 		fileID << " $!STREAMTRACE ADD\n  STREAMTYPE = VOLUMELINE\n  STREAMDIRECTION = BOTH" << endl;
 		fileID << "  STARTPOS{X=" << x << " Y=" << y << " Z=" << z << "}" << endl;
 	}

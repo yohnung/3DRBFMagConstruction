@@ -189,8 +189,10 @@ void magisland(double* value, Point& var)
 void ModelField(int num, Point* Node, Point* DistParam, Point* Position, double Value[][Dim])
 {
 	int i;
-	if (model == SEPARATORMODEL)
-		SeparatorField(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
+	if (model == SEPARATORMODEL1)
+		SeparatorField1(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
+	if (model == SEPARATORMODEL2)
+		SeparatorField2(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
 	else if (model == RBFMODEL)
 		RBFModelField(num, Node, DistParam, Position, Value);	// use Separator Model to model a magnetic field
 	else if (model == CURRENTSHEET)
@@ -224,7 +226,7 @@ void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, doub
 	delete[] Alpha;
 	delete[] Chi;
 }
-void SeparatorField(int num, Point* Position, double Value[][Dim])
+void SeparatorField1(int num, Point* Position, double Value[][Dim])
 {
 /******	use Separator Model to model a magnetic field, please refer to Pontin[2011], Advances in Space Research	******/
 	 double Bx, By, Bz;
@@ -248,6 +250,31 @@ void SeparatorField(int num, Point* Position, double Value[][Dim])
 		 Value[i][2] = Bz;
 	 }
 	 write_script_tecplot();
+}
+void SeparatorField2(int num, Point* Position, double Value[][Dim])
+{
+	/******	use Separator Model to model a magnetic field, please refer to Pontin[2011], Advances in Space Research	******/
+	double Bx, By, Bz;
+	double x, y, z;
+	int i, j;
+
+	for (i = 0; i < num; i++)
+	{
+		x = Position[i].getx();
+		y = Position[i].gety();
+		z = Position[i].getz();
+
+		y = y - Null_OffsetY;			// This is means that magneti-null is located at (Null_OffsetY +/- Null_Posit)
+		Bx = Bmagnit * (2./3 * x*x*x * y + 2*x * (y * Null_Posit*Null_Posit - 1./3 * y*y*y)
+			+ 0.5 * Current_along_Separator * (-z * exp(-(x*x + z*z) / (2 * Cur_Width * Cur_Width))));
+		By = Bmagnit * ((x*x + z*z + 5./3 * Null_Posit*Null_Posit - 1./3* y*y) * (Null_Posit*Null_Posit - y*y) + 1./6 * (x*x*x*x + z*z*z*z));
+		Bz = Bmagnit * (2./3 * z*z*z * y + 2*z * (y * Null_Posit*Null_Posit - 1./3 * y*y*y)
+			+ 0.5 * Current_along_Separator * (x * exp(-(x*x + z*z) / (2 * Cur_Width * Cur_Width))));
+		Value[i][0] = Bx;
+		Value[i][1] = By;
+		Value[i][2] = Bz;
+	}
+	write_script_tecplot();
 }
 void write_script_tecplot()
 {

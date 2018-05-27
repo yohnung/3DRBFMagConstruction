@@ -12,6 +12,7 @@ void CrdTrf2MinVarDir(int, Point*, double[][Dim], double*, Point*, Point*, doubl
 void CrdTrf2MinVarDir(int, double*, Point*);
 void MVAfunction(Point*, double[][Dim], double*);
 void specifyAY(double[][N_Alpha], double*, double[][Dim], Point*, int, BasicFunction*);
+void specifyAplus(double[][N_Alpha], Point*, int, BasicFunction*);
 void generalSolver(double*, Point*, double[][Dim], int, BasicFunction*);
 double LinearLUSolver(double*, double[][N_Alpha], double*, int);
 void LinearQRSolver(double*, double[][N_Alpha], double*, int, double*);

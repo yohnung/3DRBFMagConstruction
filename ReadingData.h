@@ -5,5 +5,6 @@ double tanhtofit(Point& var);
 void magisland(double* value, Point& var);
 void ModelField(int, Point*, Point*, Point*, double[][Dim]);
 void RBFModelField(int, Point*, Point*, Point*, double[][Dim]);
-void SeparatorField(int, Point*, double[][Dim]);
+void SeparatorField1(int, Point*, double[][Dim]);
+void SeparatorField2(int, Point*, double[][Dim]);
 void write_script_tecplot();

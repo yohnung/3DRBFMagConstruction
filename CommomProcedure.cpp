@@ -651,6 +651,59 @@ void specifyAY(double A[][N_Alpha], double* Y,	double observedValue[][Dim],
 	delete[] FirstDeriv;
 	delete[] SecondDeriv;
 }
+void specifyAplus(double Aplus[][N_Alpha], Point* Grid, int num, BasicFunction* Chi)
+{
+	double* FirstDeriv = new double[Dim]();
+	double(*SecondDeriv)[Dim] = new double[Dim][Dim]();
+	double* ScalarDeriv = new double();
+	double x, y, z, r;
+	int i, j, k;
+	if (Dim == 1)
+	{
+		for (i = 0; i < num; i++)
+		{
+			for (j = 0; j < N; j++)
+				Aplus[i][j] = Chi[j].getValue(Grid[i]);				// scalar B
+		}
+	}
+	if (Dim == 2)
+	{
+		for (i = 0; i < num; i++)
+		{
+			for (j = 0; j < N; j++)
+				Aplus[2 * i][j] = Chi[j].get_yDeriv(Grid[i]);		// Bx
+			for (j = 0; j < N; j++)
+				Aplus[2 * i + 1][j] = -Chi[j].get_xDeriv(Grid[i]);	// By
+		}
+	}
+	if (Dim == 3)
+	{
+		for (i = 0; i < num; i++)
+		{
+			x = Grid[i].getx(); y = Grid[i].gety(); z = Grid[i].getz();
+			r = Grid[i].getradialLength();
+			for (j = 0; j < N; j++)
+			{
+				Chi[j].getDerivative(Grid[i], FirstDeriv, SecondDeriv, ScalarDeriv);
+				Aplus[3 * i][2 * j] = 1 / r * (z*FirstDeriv[1] - y*FirstDeriv[2]);	// 1/r * (z * Partial_y - y * Partial_z)
+				Aplus[3 * i][2 * j + 1] = 2 * FirstDeriv[0]
+					+ (x*SecondDeriv[0][0] + y*SecondDeriv[0][1] + z*SecondDeriv[0][2])
+					- x*(*ScalarDeriv);
+				Aplus[3 * i + 1][2 * j] = 1 / r*(x*FirstDeriv[2] - z*FirstDeriv[0]);	// 1/r * (x * Partial_z - z * Partial_x)
+				Aplus[3 * i + 1][2 * j + 1] = 2 * FirstDeriv[1]
+					+ (x*SecondDeriv[0][1] + y*SecondDeriv[1][1] + z*SecondDeriv[1][2])
+					- y*(*ScalarDeriv);
+				Aplus[3 * i + 2][2 * j] = 1 / r*(y*FirstDeriv[0] - x*FirstDeriv[1]);	// 1/r * (y * Partial_x - x * Partial_y)
+				Aplus[3 * i + 2][2 * j + 1] = 2 * FirstDeriv[2]
+					+ (x*SecondDeriv[0][2] + y*SecondDeriv[1][2] + z*SecondDeriv[2][2])
+					- z*(*ScalarDeriv);
+			}
+		}
+	}
+	delete ScalarDeriv;
+	delete[] FirstDeriv;
+	delete[] SecondDeriv;
+}
 void generalSolver(double* Alpha, Point* Position, double observedValue[][Dim],
 	int Number_obserPosit, BasicFunction* Chi)
 {

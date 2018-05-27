@@ -83,9 +83,13 @@ int main()
 /******	define Matrix A and Y to solve Alpha of A*Alpha=Y, using LU, QR and SVD method	******************************/
 	double (*A)[N_Alpha] = new double[Dim * Number_obserPosit][N_Alpha]();	// define Matrix A, later in used in solving A* alpha = Y
 	double* Y = new double[Dim * Number_obserPosit]();						// observed value
+	double(*Aplus)[N_Alpha] = new double[Dim * GN][N_Alpha]();
 	specifyAY(A, Y, observedValue, Position, Number_obserPosit, Chi);		// specify A and Y using RBF and observed value
-	ofstream TransformMatrixOut("TransfromMatrix.dat");
+//	specifyAplus(Aplus, Grid, GN, Chi);										// specify A+ using Chi-RadialBasicFunction on Grid Point
+	ofstream TransformMatrixOut("TransformMatrix.dat");
 	write(A, Dim*Number_obserPosit, TransformMatrixOut);
+	TransformMatrixOut << endl;
+//	write(Aplus, Dim*GN, TransformMatrixOut);
 	TransformMatrixOut.close();
 	double acond = 1;														// condition numver of A^T * A
 	acond = LinearLUSolver(Alpha, A, Y, Number_obserPosit);					// LU solving A * alpha = Y
@@ -132,6 +136,7 @@ int main()
 	fieldout.close();
 /****** close file, recycle dynamic memory and terminate the code	**************************************************/
 	delete[] Y;
+	delete[] Aplus;
 	delete[] A;
 	delete[] Alpha2;
 	delete[] abs_min_value;

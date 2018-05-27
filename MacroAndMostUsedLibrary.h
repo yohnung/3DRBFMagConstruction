@@ -14,8 +14,9 @@
 #define N_Alpha N*2			// Number of 'alpha's; for 1D/2D, N_Alpha=N; for 3D N_Alpha=2N
 #define max_length 1000		// maximum number of observed positions
 /****** model magnetic field type	******/
-#define RBFMODEL 'r'		// use RBF-mode to generate a model field
-#define SEPARATORMODEL 's'	// use separator-model
-#define CURRENTSHEET  'c'	// use current sheet in 1d or magisland in 2d
-#define DEFAULT 'd'			// do not use model field, instead, use reading data from observation
+#define RBFMODEL 'r'			// use RBF-mode to generate a model field
+#define SEPARATORMODEL1 's'	// use separator-model
+#define SEPARATORMODEL2 't'	// use separator-model
+#define CURRENTSHEET  'c'		// use current sheet in 1d or magisland in 2d
+#define DEFAULT 'd'				// do not use model field, instead, use reading data from observation
 #define Pi	3.141592653589793

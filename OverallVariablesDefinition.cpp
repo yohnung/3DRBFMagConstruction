@@ -47,13 +47,29 @@ double degreez = Pi * 10/ 180;			// 10 degree rotate coordinates of z-axis
 double degreey = Pi / 4;				// 45 degree rotate corrdinate of x-axis
 /******	model the magnetic field value using 'Separator model'	******/
 double Bmagnit = 1;						// magnitude of magnetic field
-double Current_along_Separator = 1.5;	// current flow along separator line
+double Current_along_Separator = 6.2;	// current flow along separator line
 double Null_Posit = 1;					// null's positions, corresponding to +/- value
 double Null_OffsetY = -4;
-double Cur_Width = 1.0;
+double Cur_Width = 10.;
+/****** add some random error to the observed value		******/
+int	   random_switch = 1;				// '1' for on; '0' for off;
+double Random_Mean = 0.;
+double Random_Sigma = 0.5 * Bmagnit;
+double Random_Bound = 0.2 * Bmagnit;
+
+int pos_rand_switch = 1;				// random position on when '1'
+double xPos_Rand_Mean = 0;
+double xPos_Rand_Sigma = 0.5 * Leapy;
+double xPos_Rand_Bound = 0.2 * Leapy;
+double yPos_Rand_Mean = 0;
+double yPos_Rand_Sigma = 0.75 * Leapy;	// almost uniform
+double yPos_Rand_Bound = 0.5 * Leapy;	// y-direction is the most random position
+double zPos_Rand_Mean = 0;
+double zPos_Rand_Sigma = 0.5 * Leapy;
+double zPos_Rand_Bound = 0.2 * Leapy;
 /******	choose what model you want use	******/
-char   model = SEPARATORMODEL2;			// SEPARATORMODEL for separator model; RBFMODEL for RBF-model; DEFAULT for no model
+char   model = SEPARATORMODEL1;			// SEPARATORMODEL for separator model; RBFMODEL for RBF-model; DEFAULT for no model
 /******	Parameter used in solver	******************************/
-double cutoff = 1.5e5;		// When we solve the problem using SVD, omit singular value using this parameter
+double cutoff = -0;			// When we solve the problem using SVD, omit singular value using this parameter
 double tolerance = 0.5;		// when B is lower than tolerance*max_value, the related equation will be wholely divided by B 
 

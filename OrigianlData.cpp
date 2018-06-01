@@ -186,12 +186,44 @@ void magisland(double* value, Point& var)
 		value[0] = value[0] * cos(degreez) - By * sin(degreez);
 	}	
 }
+void addRandomPos(int num, Point* Position, Point* randPos)
+{
+	int i;
+	double tmppos, rand_pos[Dim];
+	default_random_engine generator(time(NULL));
+	normal_distribution<double> xdistribution(xPos_Rand_Mean, xPos_Rand_Sigma);
+	normal_distribution<double> ydistribution(yPos_Rand_Mean, yPos_Rand_Sigma);
+	normal_distribution<double> zdistribution(zPos_Rand_Mean, zPos_Rand_Sigma);
+	for (i = 0; i < num; i++)						// add random translation to positions
+	{
+		tmppos = pos_rand_switch * xdistribution(generator);
+		if ((tmppos - xPos_Rand_Mean) > xPos_Rand_Bound) tmppos = xPos_Rand_Mean + xPos_Rand_Bound;
+		else if ((tmppos - xPos_Rand_Mean) < -xPos_Rand_Bound) tmppos = xPos_Rand_Mean - xPos_Rand_Bound;
+		rand_pos[0] = tmppos;
+		if (Dim > 1)
+		{
+			tmppos = pos_rand_switch * ydistribution(generator);
+			if ((tmppos - yPos_Rand_Mean) > yPos_Rand_Bound) tmppos = yPos_Rand_Mean + yPos_Rand_Bound;
+			else if ((tmppos - yPos_Rand_Mean) < -yPos_Rand_Bound) tmppos = yPos_Rand_Mean - yPos_Rand_Bound;
+			rand_pos[1] = tmppos;
+		}
+		if (Dim > 2)
+		{
+			tmppos = pos_rand_switch * zdistribution(generator);
+			if ((tmppos - zPos_Rand_Mean) > zPos_Rand_Bound) tmppos = zPos_Rand_Mean + zPos_Rand_Bound;
+			else if ((tmppos - zPos_Rand_Mean) < -zPos_Rand_Bound) tmppos = zPos_Rand_Mean - zPos_Rand_Bound;
+			rand_pos[2] = tmppos;
+		}
+		randPos[i].specify(rand_pos);
+		randPos[i] = Position[i] + randPos[i];
+	}
+}
 void ModelField(int num, Point* Node, Point* DistParam, Point* Position, double Value[][Dim])
 {
 	int i;
 	if (model == SEPARATORMODEL1)
 		SeparatorField1(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
-	if (model == SEPARATORMODEL2)
+	else if (model == SEPARATORMODEL2)
 		SeparatorField2(num, Position, Value);	// use Radial Basic Function to re-model magnetic field
 	else if (model == RBFMODEL)
 		RBFModelField(num, Node, DistParam, Position, Value);	// use Separator Model to model a magnetic field
@@ -206,6 +238,23 @@ void ModelField(int num, Point* Node, Point* DistParam, Point* Position, double 
 	}
 	else
 		cout << "You should read data from real observation file, do you really do that?" << endl;
+}
+void addRandomError(int num, double Value[][Dim])
+{
+	int i, j;
+	default_random_engine generator(time(NULL));
+	normal_distribution<double> distribution(Random_Mean, Random_Sigma);
+	double tmpvalue;
+	for (i = 0; i < num; i++)
+	{
+		for (j = 0; j < Dim; j++)
+		{
+			tmpvalue = distribution(generator);
+			if ((tmpvalue - Random_Mean) > Random_Bound) tmpvalue = Random_Mean + Random_Bound;
+			else if ((tmpvalue - Random_Mean) < -Random_Bound) tmpvalue = Random_Mean - Random_Bound;
+			Value[i][j] = Value[i][j] + random_switch*tmpvalue;
+		}
+	}
 }
 void RBFModelField(int num, Point* Node, Point* DistParam, Point* Position, double observedValue[][Dim])
 {

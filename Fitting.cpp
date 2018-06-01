@@ -42,7 +42,8 @@ int main()
 	double Alpha[N_Alpha];							// for 1D/2D N_alpha = N; 
 	Point* Grid = new Point[GN]();					// GN is the number of Grid with GN = GNx * GNy * GNz, which are used to diagnose
 	ifstream datain("craft_observed_value.dat");
-	ofstream dataout("modified_observed_data_fitted_data.dat");		// write out position and magnetic filed value after coordinates transformation
+	ofstream modeldataout("model_observed_data.dat");				// write out position and magnetic filed value without random error
+	ofstream dataout("modified_observed_data_fitted_data.dat");		// write out position and magnetic filed value with ranodm error
 	ofstream Resultout("RBF_Length_Node_Dist_Alpha.dat");			// write out Node, Distance Parameter, Alpha
 /******	specify craft's position relate to whole Structure, magnetic field value and number of observation data	******/
 	double* max_posit = new double[Dim]();									// max_position_x, max_position_y, max_position_z;
@@ -69,10 +70,16 @@ int main()
 	//if (Dim > 2)
 	//	TypicalLength[2] = 2;			// manually assign value to typical length of Radial Basic Function
 	CrdTrf2MinVarDir(GN, Alpha2, Grid);
-	write_satellite_position(Position);
+	write_satellite_position(Position);										// for plotting the crafts in tecplot
 	BasicFunction::assign_TypicalLength(TypicalLength);
 /******	use RBF to model magnetic field and write position, value, node, distance parameter and Typical Length	*******/
-	ModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use model field to model magnetic field 
+	ModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use model field to model magnetic field without any random error
+	write(Position, Number_obserPosit, modeldataout); write(observedValue, Number_obserPosit, modeldataout);	
+	Point* randPos = new Point[Number_obserPosit]();
+	addRandomPos(Number_obserPosit, Position, randPos);							// add random position error to original positions	
+	ModelField(Number_obserPosit, Node, DistParam, randPos, observedValue);		// use model field to model magnetic field 
+	addRandomError(Number_obserPosit, observedValue);							// add random field error to model value
+	delete[] randPos;
 //	dataout << "coordinates transformed data written by c++ program " << endl;	dataout << "Position,    observerdValue,    fitted value" << endl;
 	write(Position, Number_obserPosit, dataout); write(observedValue, Number_obserPosit, dataout);
 	Resultout << BasicFunction::Lx << " " << BasicFunction::Ly << " " << BasicFunction::Lz << " " << endl;
@@ -148,6 +155,7 @@ int main()
 	delete[] Grid;
 	delete[] Position;
 	Resultout.close();
+	modeldataout.close();
 	dataout.close();
 	datain.close();
 	return 0;

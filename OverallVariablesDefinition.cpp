@@ -1,6 +1,6 @@
 #include "MacroAndMostUsedLibrary.h"
 /******	related to space craft, when read observed value form real craft data file, these are useless	******/
-double M = 21;				// number of flying position, useless when read from file
+double M = 251;				// number of flying position, should be read from other file
 /******	flying 5 space-crafts, generating position as	******/
 /******			        **3 					******/
 /******			    **8		**7					******/

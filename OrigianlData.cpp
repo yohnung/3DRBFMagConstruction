@@ -103,38 +103,37 @@ int read(Point* Position, double observedValue[][Dim])
 int read(Point* Position, double observedValue[][Dim], ifstream& datain)
 {
 /******	simply read from datain the position of craft and observed magnetic field value	******/
-	int Num_obserPosit = M;
+	int Num_obserPosit = M;			// M is the number of measurments, read from other file, and can be amended
 	double x[3];
 	double valuex, valuey, valuez;
 	double Hour, Minute, Second, tmp;
 	int num;
 	num = 0;
-	while (datain.good())
+	while (num < M)
 	{
-		datain >> Hour >> Minute >> Second;
-		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+//		datain >> Hour >> Minute >> Second;
+		datain >> valuex >> valuey >> valuez  >> x[0] >> x[1] >> x[2];
 		Position[num].specify(x); 
 		observedValue[num][0] = valuex; 
 		observedValue[num][1] = valuey; 
 		observedValue[num][2] = valuez;
-		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		datain >> valuex >> valuey >> valuez  >> x[0] >> x[1] >> x[2];
 		Position[Num_obserPosit + num].specify(x); 
 		observedValue[Num_obserPosit + num][0] = valuex; 
 		observedValue[Num_obserPosit + num][1] = valuey; 
 		observedValue[Num_obserPosit + num][2] = valuez;
-		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		datain >> valuex >> valuey >> valuez  >> x[0] >> x[1] >> x[2];
 		Position[2 * Num_obserPosit + num].specify(x);
 		observedValue[2 * Num_obserPosit + num][0] = valuex;
 		observedValue[2 * Num_obserPosit + num][1] = valuey;
 		observedValue[2 * Num_obserPosit + num][2] = valuez;
-		datain >> valuex >> valuey >> valuez >> tmp >> x[0] >> x[1] >> x[2];
+		datain >> valuex >> valuey >> valuez  >> x[0] >> x[1] >> x[2];
 		Position[3 * Num_obserPosit + num].specify(x);
 		observedValue[3 * Num_obserPosit + num][0] = valuex;
 		observedValue[3 * Num_obserPosit + num][1] = valuey;
 		observedValue[3 * Num_obserPosit + num][2] = valuez;
 		num = num + 1;
 	}
-	M = num;							// every craft's observed position's number
 	GroupNumber = 4;					// craft's number
 	return GroupNumber*M;
 }

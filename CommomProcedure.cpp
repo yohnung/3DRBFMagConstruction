@@ -580,7 +580,7 @@ void CrdTrf2MinVarDir(int num, double* Alpha, Point* Grid)
 }
 void MVAfunction(Point* Position, double observedValue[][Dim], double* min_vary_direc)
 {
-/******	find minimum varying direction ******/
+/******	find minimum varying direction, default is y-direction ******/
 	min_vary_direc[0] = 0;
 	if (Dim > 1)
 	{
@@ -1129,7 +1129,7 @@ void write_satellite_position(Point* Position)
 	ofstream fileout("satellite_position_over_time.dat");
 	fileout << "title = \"Satellite's position varing with time\"" << endl;
 	fileout << "variables = \"x\", \"y\", \"z\"" << endl;
-	if (GroupNumber == 4)					// make it a tetrahedron
+	if (GroupNumber <= 4) 					// make it a tetrahedron
 	{
 		numelement = 1;
 		strcpy(zonetype, "fetetrahedron");
@@ -1172,8 +1172,10 @@ void write_satellite_position(Point* Position)
 		}
 		fileout << endl;
 
-		if (GroupNumber == 4)					// make it a quadilateral
-			fileout << "1 2 3 4";
+		if (GroupNumber == 3)					// make it a quadilateral
+			fileout << "1 2 3 3" << endl;
+		else if (GroupNumber == 4)				// make it a quadilateral
+			fileout << "1 2 3 4" << endl;
 		else if (GroupNumber == 5)				// make it four triangles
 		{
 			fileout << "1 2 5" << endl;

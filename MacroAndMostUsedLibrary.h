@@ -3,7 +3,7 @@
 #include <fstream>
 /******	Configurating problem	*********************************/
 #define Dim 3				// dimension
-#define Nx 20				// number of Nodes in x direction, must be at least 1
+#define Nx 10				// number of Nodes in x direction, must be at least 1
 #define Ny 2				// number of Nodes in y direction, must be at least 1
 #define Nz 2				// number of Nodes in z direction, must be at least 1
 #define N  Nx*Ny*Nz			// number of Nodes in total

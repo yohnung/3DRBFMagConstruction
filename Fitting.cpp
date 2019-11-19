@@ -41,14 +41,15 @@ int main()
 	double TypicalLength[Dim];						// typical length used in radial basic function
 	double Alpha[N_Alpha];							// for 1D/2D N_alpha = N; 
 	Point* Grid = new Point[GN]();					// GN is the number of Grid with GN = GNx * GNy * GNz, which are used to diagnose
-	ifstream datain("craft_observed_value.dat");
-	ofstream dataout("modified_observed_data_fitted_data.dat");		// write out position and magnetic filed value after coordinates transformation
+	ifstream datain("Magnetic_Field_Position.dat");
+	ofstream modeldataout("model_observed_data.dat");				// write out position and magnetic filed value without random error
+	ofstream dataout("modified_observed_data_fitted_data.dat");		// write out position and magnetic filed value with ranodm error
 	ofstream Resultout("RBF_Length_Node_Dist_Alpha.dat");			// write out Node, Distance Parameter, Alpha
 /******	specify craft's position relate to whole Structure, magnetic field value and number of observation data	******/
 	double* max_posit = new double[Dim]();									// max_position_x, max_position_y, max_position_z;
 	double* min_posit = new double[Dim]();									// min position
-	Number_obserPosit = read(Position, observedValue);						// reading by generating data whose configuration is a magnetic island
-//	Number_obserPosit = read(Position, observedValue, datain);				// reading from real observed value
+//	Number_obserPosit = read(Position, observedValue);						// reading by generating data whose configuration is a magnetic island
+	Number_obserPosit = read(Position, observedValue, datain);				// reading from real observed value
 	double* Alpha1 = new double[Dim]();										// the first transformation degree
 	CrdTrf2FlyDirec(Number_obserPosit, Position, observedValue, Alpha1,   	// Coordinates Transform to Flying Direction, make it x-direction
 		max_posit, min_posit);
@@ -62,17 +63,23 @@ int main()
 	double* abs_min_value = new double[Dim]();								// minimum observed value
 	double* Alpha2 = new double[Dim]();										// second transformation degree
 	CrdTrf2MinVarDir(Number_obserPosit, Position, observedValue, Alpha2, 	// according to position and observe value to
-		Node, DistParam, TypicalLength, abs_max_value, abs_min_value);		// specify a min varing direction, make it z-direction and redifine Lx, Ly, Lz
+		Node, DistParam, TypicalLength, abs_max_value, abs_min_value);		// specify a min varing direction, make it y-direction and redifine Lx, Ly, Lz
 	//TypicalLength[0] = 0.4;// 0.4;	// manually assign value to typical length of Radial Basic Function
 	//if (Dim > 1)
 	//	TypicalLength[1] = 1;// 2;		// manually assign value to typical length of Radial Basic Function
 	//if (Dim > 2)
 	//	TypicalLength[2] = 2;			// manually assign value to typical length of Radial Basic Function
 	CrdTrf2MinVarDir(GN, Alpha2, Grid);
-	write_satellite_position(Position);
+	write_satellite_position(Position);										// for plotting the crafts in tecplot
 	BasicFunction::assign_TypicalLength(TypicalLength);
 /******	use RBF to model magnetic field and write position, value, node, distance parameter and Typical Length	*******/
-	ModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use model field to model magnetic field 
+//	ModelField(Number_obserPosit, Node, DistParam, Position, observedValue);	// use model field to model magnetic field without any random error
+//	write(Position, Number_obserPosit, modeldataout); write(observedValue, Number_obserPosit, modeldataout);	
+//	Point* randPos = new Point[Number_obserPosit]();
+//	addRandomPos(Number_obserPosit, Position, randPos);							// add random position error to original positions	
+//	ModelField(Number_obserPosit, Node, DistParam, randPos, observedValue);		// use model field to model magnetic field 
+//	addRandomError(Number_obserPosit, observedValue);							// add random field error to model value
+//	delete[] randPos;
 //	dataout << "coordinates transformed data written by c++ program " << endl;	dataout << "Position,    observerdValue,    fitted value" << endl;
 	write(Position, Number_obserPosit, dataout); write(observedValue, Number_obserPosit, dataout);
 	Resultout << BasicFunction::Lx << " " << BasicFunction::Ly << " " << BasicFunction::Lz << " " << endl;
@@ -83,7 +90,14 @@ int main()
 /******	define Matrix A and Y to solve Alpha of A*Alpha=Y, using LU, QR and SVD method	******************************/
 	double (*A)[N_Alpha] = new double[Dim * Number_obserPosit][N_Alpha]();	// define Matrix A, later in used in solving A* alpha = Y
 	double* Y = new double[Dim * Number_obserPosit]();						// observed value
+	double(*Aplus)[N_Alpha] = new double[Dim * GN][N_Alpha]();
 	specifyAY(A, Y, observedValue, Position, Number_obserPosit, Chi);		// specify A and Y using RBF and observed value
+	specifyAplus(Aplus, Grid, GN, Chi);										// specify A+ using Chi-RadialBasicFunction on Grid Point
+	ofstream TransformMatrixOut("TransformMatrix.dat");
+	write(A, Dim*Number_obserPosit, TransformMatrixOut);
+	TransformMatrixOut << endl;
+	write(Aplus, Dim*GN, TransformMatrixOut);
+	TransformMatrixOut.close();
 	double acond = 1;														// condition numver of A^T * A
 	acond = LinearLUSolver(Alpha, A, Y, Number_obserPosit);					// LU solving A * alpha = Y
 	LinearQRSolver(Alpha, A, Y, Number_obserPosit, abs_max_value);
@@ -92,7 +106,7 @@ int main()
 /******	using optimized 'Alpha's to reconstruct observed magnetic filed defined on observation point	******/
 	double(*fittedValue)[Dim] = new double[Number_obserPosit][Dim]();
 	oncefit fitting;
-	fitting.assignParameter( Alpha );										
+	fitting.assignParameter(Alpha);
 	for (int i = 0; i < Number_obserPosit; i++)
 		fitting.getValue(fittedValue[i], Position[i], Chi);
 	write(fittedValue, Number_obserPosit, dataout);
@@ -100,23 +114,36 @@ int main()
 /******	using optimized 'Alpha's to reconstruct global magnetic filed defined on Grid point	******/
 	fittedValue = new double[GN][Dim]();
 	double(*modelValue)[Dim] = new double[GN][Dim]();
+	double(*diffValue)[Dim] = new double[GN][Dim]();
 	ofstream modelfieldout("model_MagField_for_tecplot.dat");		// write our field value at grid point in Tecplot Format
 	ofstream fittedfieldout("RBF_fitted_MagField_for_tecplot.dat");	// write out field value at grid point in Tecplot Format
+	ofstream difffieldout("difference_MagField_for_tecplot.dat");	// write out field value at grid point in Tecplot Format
 	ofstream fieldout("MagField_fitted_and_model_for_tecplot.dat");	// write out field value of fitted result and model result in Tecplot Format
 	for (int i = 0; i < GN; i++)
 		fitting.getValue(fittedValue[i], Grid[i], Chi);
 	fittedfieldout << "title = \"RBF fitted magnetic field value at grid point\"" << endl;
-	write_tecplot(Grid, fittedValue, GN, fittedfieldout);	
-	ModelField(GN, Node, DistParam, Grid, modelValue);
-	modelfieldout << "title = \"real field value at grid point\"" << endl;
-	write_tecplot(Grid, modelValue, GN, modelfieldout);
+	write_tecplot(Grid, fittedValue, GN, fittedfieldout);
+//	ModelField(GN, Node, DistParam, Grid, modelValue);
+//	modelfieldout << "title = \"real field value at grid point\"" << endl;
+//	write_tecplot(Grid, modelValue, GN, modelfieldout);
+//	for (int i = 0; i < GN; i++)
+//	{
+//		for (int j = 0; j < 3; j++)
+//			diffValue[i][j] = fittedValue[i][j] - modelValue[i][j];
+//	}
+//	difffieldout << "title = \"difference of magnetic value at grid point\"" << endl;
+//	write_tecplot(Grid, diffValue, GN, difffieldout);
 //	write_tecplot(Grid, fittedValue, modleValue, GN, fieldout);
 	delete[] fittedValue;
 	delete[] modelValue;
+	delete[] diffValue;
 	modelfieldout.close();
 	fittedfieldout.close();
+	difffieldout.close();
+	fieldout.close();
 /****** close file, recycle dynamic memory and terminate the code	**************************************************/
 	delete[] Y;
+	delete[] Aplus;
 	delete[] A;
 	delete[] Alpha2;
 	delete[] abs_min_value;
@@ -128,6 +155,7 @@ int main()
 	delete[] Grid;
 	delete[] Position;
 	Resultout.close();
+	modeldataout.close();
 	dataout.close();
 	datain.close();
 	return 0;

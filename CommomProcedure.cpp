@@ -222,13 +222,13 @@ void constructNodesWeb(double* max_posit, double* min_posit, Point* Node, Point*
 		meanDelta[2].assignz(meandist[2]);
 		DistParam[0].assignz(meandist[2]);
 	}
-	Node[0] = min_Position - 0.2 * (max_Position - min_Position);
 /******* Specify DistParam, usually 3 times Node's distance which means 3 * 1.4 in dimensionless case	******/
-	double* temptemp = new double[2]();				// DistParam[0] = stretchParam * DistParam[0];
+	double* temptemp = new double[3]();				// DistParam[0] = stretchParam * DistParam[0];
 	temptemp[0] = 4.2;								// DistParam[0] = stretchParam * DistParam[0];
 	DistParam[0].specify(temptemp);					// DistParam[0] = stretchParam * DistParam[0];
 	delete[] temptemp;
 /******* construct the web of Nodes		**********************************************************************/
+	Node[0] = min_Position - 0.2 * (max_Position - min_Position);
 	for (i = 1; i < Nx; i++)
 	{
 		if (Dim > 1)
@@ -472,7 +472,7 @@ void CrdTrf2MinVarDir(int num, Point* Position, double observedValue[][Dim], dou
 	Point* Node, Point* DistParam, double* TypicalLength, double* abs_max_value, double* abs_min_value)
 {
 /******	According to position and observe value to find a min varing direction,			*******/
-/******	then specify degree Alpha, to make it y-directionand. Thus transform 'position',*******/
+/******	then specify degree Alpha, to make it y-direction. Thus transform 'position',*******/
 /******	'observed value', 'node', 'distparam', and find absolute maximum observed value.*******/
 /******	Finally transform 'typical length' to new coordinates									*******/
 	double min_vary_direc[Dim];		// minimum varing direction
@@ -580,7 +580,7 @@ void CrdTrf2MinVarDir(int num, double* Alpha, Point* Grid)
 }
 void MVAfunction(Point* Position, double observedValue[][Dim], double* min_vary_direc)
 {
-/******	find minimum varying direction ******/
+/******	find minimum varying direction, default is y-direction ******/
 	min_vary_direc[0] = 0;
 	if (Dim > 1)
 	{
@@ -645,6 +645,59 @@ void specifyAY(double A[][N_Alpha], double* Y,	double observedValue[][Dim],
 			Y[3 * i] = observedValue[i][0];							// Bx
 			Y[3 * i + 1] = observedValue[i][1];						// By
 			Y[3 * i + 2] = observedValue[i][2];						// Bz
+		}
+	}
+	delete ScalarDeriv;
+	delete[] FirstDeriv;
+	delete[] SecondDeriv;
+}
+void specifyAplus(double Aplus[][N_Alpha], Point* Grid, int num, BasicFunction* Chi)
+{
+	double* FirstDeriv = new double[Dim]();
+	double(*SecondDeriv)[Dim] = new double[Dim][Dim]();
+	double* ScalarDeriv = new double();
+	double x, y, z, r;
+	int i, j, k;
+	if (Dim == 1)
+	{
+		for (i = 0; i < num; i++)
+		{
+			for (j = 0; j < N; j++)
+				Aplus[i][j] = Chi[j].getValue(Grid[i]);				// scalar B
+		}
+	}
+	if (Dim == 2)
+	{
+		for (i = 0; i < num; i++)
+		{
+			for (j = 0; j < N; j++)
+				Aplus[2 * i][j] = Chi[j].get_yDeriv(Grid[i]);		// Bx
+			for (j = 0; j < N; j++)
+				Aplus[2 * i + 1][j] = -Chi[j].get_xDeriv(Grid[i]);	// By
+		}
+	}
+	if (Dim == 3)
+	{
+		for (i = 0; i < num; i++)
+		{
+			x = Grid[i].getx(); y = Grid[i].gety(); z = Grid[i].getz();
+			r = Grid[i].getradialLength();
+			for (j = 0; j < N; j++)
+			{
+				Chi[j].getDerivative(Grid[i], FirstDeriv, SecondDeriv, ScalarDeriv);
+				Aplus[3 * i][2 * j] = 1 / r * (z*FirstDeriv[1] - y*FirstDeriv[2]);	// 1/r * (z * Partial_y - y * Partial_z)
+				Aplus[3 * i][2 * j + 1] = 2 * FirstDeriv[0]
+					+ (x*SecondDeriv[0][0] + y*SecondDeriv[0][1] + z*SecondDeriv[0][2])
+					- x*(*ScalarDeriv);
+				Aplus[3 * i + 1][2 * j] = 1 / r*(x*FirstDeriv[2] - z*FirstDeriv[0]);	// 1/r * (x * Partial_z - z * Partial_x)
+				Aplus[3 * i + 1][2 * j + 1] = 2 * FirstDeriv[1]
+					+ (x*SecondDeriv[0][1] + y*SecondDeriv[1][1] + z*SecondDeriv[1][2])
+					- y*(*ScalarDeriv);
+				Aplus[3 * i + 2][2 * j] = 1 / r*(y*FirstDeriv[0] - x*FirstDeriv[1]);	// 1/r * (y * Partial_x - x * Partial_y)
+				Aplus[3 * i + 2][2 * j + 1] = 2 * FirstDeriv[2]
+					+ (x*SecondDeriv[0][2] + y*SecondDeriv[1][2] + z*SecondDeriv[2][2])
+					- z*(*ScalarDeriv);
+			}
 		}
 	}
 	delete ScalarDeriv;
@@ -719,7 +772,8 @@ double LinearLUSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_
 	LAPACKE_dgecon(LAPACK_ROW_MAJOR, 'I', N_Alpha, re_a, N_Alpha, anorm_infty, &acond);			// estimate the condition number of A
 	LAPACKE_dgetrs(LAPACK_ROW_MAJOR, 'N', N_Alpha, 1, re_a, N_Alpha, ipiv, tempAlpha, 1);		// Using LU factored Matrix to solve A * alpha = B, overwrite B
 	ofstream MatrixOut("Condition Number and SqaureMatrix.dat");
-	write(&acond, reA, MatrixOut);
+	MatrixOut << acond << endl;
+	write(reA, N_Alpha, MatrixOut);
 	MatrixOut.close();
 	ofstream LUout("LU_Alpha.dat");
 	write(tempAlpha, N_Alpha, LUout);
@@ -828,6 +882,18 @@ void LinearSVDSolver(double* Alpha, double A[][N_Alpha], double* Y, int Number_o
 	delete[] a;
 	delete[] tempAlpha;
 }
+void write(double A[][N_Alpha], int num, ofstream& filename)
+{
+/****** write out matrix with 'num' rows ******/
+	int i, j;
+	filename << setiosflags(ios::scientific) << setprecision(15);
+	for (i = 0; i < num; i++)
+	{
+		for (j = 0; j < N_Alpha; j++)
+			filename << setw(25) << A[i][j] << " ";
+		filename << endl;
+	}
+}
 void write(Point* posit, int num, ofstream& filename)
 {
 /******	write out observation positions	******/
@@ -884,21 +950,6 @@ void write(double* alpha_singularvalue, int num, ofstream& filename)
 	{
 		for (i = 0; i < num / n; i++)
 			filename << setw(25) << alpha_singularvalue[i * n + 1] << " ";
-		filename << endl;
-	}
-}
-void write(double* rcond, double Matrix[][N_Alpha], ofstream& filename)
-{
-/******	write out Matrix and its condition number	******/
-	int i, j;
-	filename << setiosflags(ios::scientific) << setprecision(15);
-	filename << *rcond << endl;
-	for (i = 0; i < N_Alpha; i++)
-	{
-		for (j = 0; j < N_Alpha; j++)
-		{
-			filename << setw(25) << Matrix[i][j] << " ";
-		}
 		filename << endl;
 	}
 }
@@ -964,7 +1015,7 @@ void write_tecplot(Point* Grid, double Value[][Dim], int num, ofstream& filename
 			Bx = Value[i][0];
 			By = Value[i][1];
 			Bz = Value[i][2];
-			ScalarB = sqrt(Bx * Bx + By * By);
+			ScalarB = sqrt(Bx * Bx + By * By + Bz * Bz);
 			filename << Bx << " ";
 			filename << By << " ";
 			filename << Bz << " ";
@@ -1072,22 +1123,75 @@ void write_satellite_position(Point* Position)
 {
 /******	write out the satellite's position evolving with time	******/
 	int Num_obserPosit = M;
-	int i, j;
-	ofstream fileout("statellite_position_over_time.dat");
+	int i, j, k;
+	int numelement;
+	char zonetype[20];
+	ofstream fileout("satellite_position_over_time.dat");
 	fileout << "title = \"Satellite's position varing with time\"" << endl;
 	fileout << "variables = \"x\", \"y\", \"z\"" << endl;
+	if (GroupNumber <= 4) 					// make it a tetrahedron
+	{
+		numelement = 1;
+		strcpy(zonetype, "fetetrahedron");
+	}
+	else if (GroupNumber == 5)				// make it four triangles
+	{
+		numelement = 4;
+		strcpy(zonetype, "fetriangle");
+	}
+	else if (GroupNumber == 9)				// make it four quadilaterals
+	{
+		numelement = 4;
+		strcpy(zonetype, "fequadrilateral");
+	}
+	else
+		cout << "Caution! You need to check the number of space-crafts";
+
 	for (i = 0; i < Num_obserPosit; i++)
 	{
-		fileout << "zone nodes = 4, elements=1, datapacking=point, zonetype=fetetrahedron" << endl;
+		fileout << "zone nodes = " << GroupNumber;
+		fileout << ", elements = " << setw(2) << numelement;
+		fileout << ", datapacking = block, zonetype = " << zonetype << endl;
 		fileout << "  strandid = 1, solutiontime = " << i << endl;
-		fileout << Position[i].getx() << " " << Position[i].gety() << " " << Position[i].getz() << endl;
-		j = Num_obserPosit + i;
-		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
-		j = 2*Num_obserPosit + i;
-		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
-		j = 3*Num_obserPosit + i;
-		fileout << Position[j].getx() << " " << Position[j].gety() << " " << Position[j].getz() << endl;
-		fileout << "1 2 3 4" << endl;
+		for (j = 0; j < GroupNumber; j++)
+		{
+			k = j*Num_obserPosit + i;
+			fileout << " " << Position[k].getx();	
+		}
+		fileout << endl;
+		for (j = 0; j < GroupNumber; j++)
+		{
+			k = j*Num_obserPosit + i;
+			fileout << " " << Position[k].gety();
+		}
+		fileout << endl;
+		for (j = 0; j < GroupNumber; j++)
+		{
+			k = j*Num_obserPosit + i;
+			fileout << " " << Position[k].getz();
+		}
+		fileout << endl;
+
+		if (GroupNumber == 3)					// make it a quadilateral
+			fileout << "1 2 3 3" << endl;
+		else if (GroupNumber == 4)				// make it a quadilateral
+			fileout << "1 2 3 4" << endl;
+		else if (GroupNumber == 5)				// make it four triangles
+		{
+			fileout << "1 2 5" << endl;
+			fileout << "5 2 3" << endl;
+			fileout << "5 3 4" << endl;
+			fileout << "5 4 1" << endl;
+		}
+		else if (GroupNumber == 9)				// make it four quadilaterals
+		{
+			fileout << "1 6 5 9" << endl;
+			fileout << "6 2 7 5" << endl;
+			fileout << "5 7 3 8" << endl;
+			fileout << "9 5 8 4" << endl;
+		}
+		else
+			cout << "Caution! You need to check the number of space-crafts";
 	}
 	;
 }
